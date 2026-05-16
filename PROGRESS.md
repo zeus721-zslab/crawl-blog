@@ -2,7 +2,7 @@
 
 ## STEP 17: deploy.yml ssh-action 버전 고정 (2026-05-16)
 - [x] STEP 17-1: PROGRESS.md 기록
-- [ ] STEP 17-2: appleboy/ssh-action@v1 → @v1.0.3 변경 + push
+- [x] STEP 17-2: appleboy/ssh-action@v1 → @v1.0.3 변경 + push
 
 ## STEP 16: database.py get_db() Thread 재시작 오류 수정 (2026-05-16)
 - [x] STEP 16-1: PROGRESS.md 기록
