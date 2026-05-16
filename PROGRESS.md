@@ -1,10 +1,18 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 6: backend Dockerfile Playwright 설치 오류 수정 (2026-05-16)
+- [x] STEP 6-1: Dockerfile 수정 (--with-deps 제거, Debian 패키지 직접 설치)
+- [ ] STEP 6-2: 커밋 + push
+
+## STEP 5: frontend package-lock.json 재생성 (2026-05-16)
+- [x] STEP 5-1: Docker로 npm install 실행 (framer-motion 반영)
+- [x] STEP 5-2: 변경된 package-lock.json 커밋 + push
+
 ## STEP 4: .gitignore 점검 + GitHub push (2026-05-16)
 - [x] STEP 4-1: .gitignore 수정 확정
 - [x] STEP 4-2: .gitattributes 생성 (LF 통일)
-- [ ] STEP 4-3: git init + add + commit
-- [ ] STEP 4-4: git remote + push
+- [x] STEP 4-3: git init + add + commit
+- [x] STEP 4-4: git remote + push
 
 ## STEP 3: LLM Provider 추상화 (2026-05-16)
 - [x] STEP 3-1: llm/base.py — 추상 클래스 + 공통 프롬프트
