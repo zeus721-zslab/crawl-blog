@@ -28,10 +28,12 @@ services:
       - CLAUDE_DAILY_LIMIT=${CLAUDE_DAILY_LIMIT:-100}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
       - DOMAIN_BLACKLIST=${DOMAIN_BLACKLIST:-}
+      - LLM_PROVIDER=${LLM_PROVIDER:-claude}
     volumes:
       - crawl-blog-data:/app/data
     networks:
       - crawl-blog-net
+      - gateway_net
 
 volumes:
   crawl-blog-data:
