@@ -47,7 +47,7 @@ class ClaudeProvider(LLMProvider):
     async def refine_content(self, raw: str, source_url: str) -> dict:
         msg = await self._client.messages.create(
             model=REFINE_MODEL,
-            max_tokens=2048,
+            max_tokens=4096,
             system=REFINE_SYSTEM,
             messages=[
                 {

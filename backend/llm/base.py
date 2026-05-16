@@ -21,6 +21,7 @@ Required JSON format:
 
 REFINE_SYSTEM = """You are a content curator for a personal knowledge blog.
 Given raw crawled HTML/text content, produce a clean blog post in Korean.
+Keep content under 1500 words to ensure complete JSON output.
 
 IMPORTANT: Return ONLY a raw JSON object. No markdown, no code blocks, no backticks, no explanation before or after.
 Output must start with { and end with }.

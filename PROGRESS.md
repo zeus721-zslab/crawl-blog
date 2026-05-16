@@ -1,9 +1,14 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 22: refine_content max_tokens 및 REFINE_SYSTEM 프롬프트 강화 (2026-05-17)
+- [x] STEP 22-1: PROGRESS.md 기록
+- [x] STEP 22-2: claude.py refine_content max_tokens 2048 → 4096
+- [x] STEP 22-3: base.py REFINE_SYSTEM content 길이 제한 추가
+
 ## STEP 21: docker-compose backend networks zslab_zslab_net 추가 (2026-05-17)
 - [x] STEP 21-1: PROGRESS.md 기록
 - [x] STEP 21-2: docker-compose backend networks에 zslab_zslab_net 추가
-- [ ] STEP 21-3: git push
+- [x] STEP 21-3: git push
 
 ## STEP 20: SQLite → MariaDB 전환 (2026-05-17)
 - [x] STEP 20-1: PROGRESS.md 기록
