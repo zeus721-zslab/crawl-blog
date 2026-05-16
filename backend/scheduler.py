@@ -39,6 +39,8 @@ async def crawl_input(input_id: int) -> None:
 
     await database.update_input(input_id, status="crawling")
     refined_count = 0
+    feed_name: str | None = inp.get("name")
+    keyword: str | None = inp.get("keyword")
 
     try:
         method = inp["crawl_method"] or "html"
@@ -55,9 +57,16 @@ async def crawl_input(input_id: int) -> None:
                 if not rate.check_and_increment():
                     log.warning("Daily refine limit reached, stopping crawl for input %d", input_id)
                     break
-                raw = entry["summary"] or entry["title"]
+                # Try fetching full article body; fall back to RSS summary on error
                 try:
-                    refined = await get_llm().refine_content(raw, src)
+                    raw = await crawler.fetch_page(src, method="html")
+                except Exception:
+                    raw = entry["summary"] or entry["title"]
+                try:
+                    refined = await get_llm().refine_content(raw, src, feed_name=feed_name, keyword=keyword)
+                    if refined.get("skip"):
+                        log.debug("Skipped unsuitable content: %s", src)
+                        continue
                     await database.create_post(
                         input_id=input_id,
                         title=refined["title"],
@@ -71,26 +80,56 @@ async def crawl_input(input_id: int) -> None:
                     log.exception("Refine failed for %s", src)
 
         else:
-            # html or playwright — URL itself is the article
-            if await database.source_url_exists(url):
-                log.debug("source_url already collected, skipping: %s", url)
-            elif not rate.check_and_increment():
-                log.warning("Daily refine limit reached, stopping crawl for input %d", input_id)
+            # html or playwright — extract article links from listing page, dedup per article
+            article_links = await crawler.fetch_links(url)
+            if not article_links:
+                # Fallback: no links found, treat page itself as single article
+                if not await database.source_url_exists(url) and rate.check_and_increment():
+                    try:
+                        raw = await crawler.fetch_page(url, method=method)
+                        refined = await get_llm().refine_content(raw, url, feed_name=feed_name, keyword=keyword)
+                        if not refined.get("skip"):
+                            await database.create_post(
+                                input_id=input_id,
+                                title=refined["title"],
+                                content=refined["content"],
+                                summary=refined["summary"],
+                                tags=refined["tags"],
+                                source_url=url,
+                            )
+                            refined_count += 1
+                    except Exception:
+                        log.exception("Refine failed for %s", url)
+                elif await database.source_url_exists(url):
+                    log.debug("source_url already collected, skipping: %s", url)
+                else:
+                    log.warning("Daily refine limit reached, stopping crawl for input %d", input_id)
             else:
-                try:
-                    raw = await crawler.fetch_page(url, method=method)
-                    refined = await get_llm().refine_content(raw, url)
-                    await database.create_post(
-                        input_id=input_id,
-                        title=refined["title"],
-                        content=refined["content"],
-                        summary=refined["summary"],
-                        tags=refined["tags"],
-                        source_url=url,
-                    )
-                    refined_count += 1
-                except Exception:
-                    log.exception("Refine failed for %s", url)
+                for article_url in article_links:
+                    if refined_count >= MAX_REFINE_PER_RUN:
+                        break
+                    if await database.source_url_exists(article_url):
+                        continue
+                    if not rate.check_and_increment():
+                        log.warning("Daily refine limit reached, stopping crawl for input %d", input_id)
+                        break
+                    try:
+                        raw = await crawler.fetch_page(article_url, method=method)
+                        refined = await get_llm().refine_content(raw, article_url, feed_name=feed_name, keyword=keyword)
+                        if refined.get("skip"):
+                            log.debug("Skipped unsuitable content: %s", article_url)
+                            continue
+                        await database.create_post(
+                            input_id=input_id,
+                            title=refined["title"],
+                            content=refined["content"],
+                            summary=refined["summary"],
+                            tags=refined["tags"],
+                            source_url=article_url,
+                        )
+                        refined_count += 1
+                    except Exception:
+                        log.exception("Refine failed for %s", article_url)
 
         hours = INTERVAL_MAP.get(inp["crawl_interval"], 6)
         await database.update_input(

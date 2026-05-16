@@ -78,6 +78,45 @@ async def _fetch_html_playwright(url: str) -> str:
 
 # ── Public: fetch a page with RSS auto-detect + fallback chain ─────────────
 
+def _extract_article_links(html: str, base_url: str) -> list[str]:
+    """Extract article-like links from a listing page (same domain, non-root paths)."""
+    from urllib.parse import urljoin
+    base_parsed = urlparse(base_url)
+    base_domain = base_parsed.netloc
+    base_path = base_parsed.path.rstrip("/")
+    soup = BeautifulSoup(html, "html.parser")
+    links: list[str] = []
+    seen: set[str] = set()
+    for a in soup.find_all("a", href=True):
+        href = urljoin(base_url, a["href"])
+        parsed = urlparse(href)
+        if parsed.netloc != base_domain:
+            continue
+        path = parsed.path.rstrip("/")
+        if not path or path == base_path:
+            continue
+        clean = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        if clean in seen:
+            continue
+        seen.add(clean)
+        links.append(clean)
+    return links[:10]
+
+
+async def fetch_links(url: str) -> list[str]:
+    """Fetch a listing page via simple HTTP and return extracted article links.
+    Returns [] on any error (caller falls back to treating page as single article)."""
+    _check_blacklist(url)
+    try:
+        async with httpx.AsyncClient(timeout=20, headers=_HEADERS, follow_redirects=True) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            return _extract_article_links(resp.text, url)
+    except Exception as exc:
+        log.debug("fetch_links failed for %s: %s", url, exc)
+        return []
+
+
 async def fetch_page(url: str, method: str = "html") -> str:
     """
     Fetch page content using the prescribed method.

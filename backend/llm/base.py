@@ -23,13 +23,16 @@ Required JSON format:
 
 REFINE_SYSTEM = """You are a content curator for a personal knowledge blog.
 Given raw crawled HTML/text content, produce a clean blog post in Korean.
+If feed_name or keyword is provided, focus the content around that context.
 Keep content under 1500 words to ensure complete JSON output.
+If the content is too short (under 200 characters), is promotional/advertisement,
+or is unrelated to the feed context, return {"skip": true} instead of the normal JSON.
 
 IMPORTANT: Return ONLY a raw JSON object. No markdown, no code blocks, no backticks, no explanation before or after.
 Output must start with { and end with }.
 
-Required JSON format:
-{"title": "...", "content": "...", "summary": "...", "tags": ["tag1", "tag2", "tag3"]}"""
+Normal format: {"title": "...", "content": "...", "summary": "...", "tags": ["tag1", "tag2", "tag3"]}
+Skip format: {"skip": true}"""
 
 
 class LLMProvider(ABC):
@@ -37,4 +40,4 @@ class LLMProvider(ABC):
     async def judge_input(self, value: str) -> dict: ...
 
     @abstractmethod
-    async def refine_content(self, raw: str, source_url: str) -> dict: ...
+    async def refine_content(self, raw: str, source_url: str, feed_name: str | None = None, keyword: str | None = None) -> dict: ...

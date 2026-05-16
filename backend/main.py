@@ -123,7 +123,7 @@ async def create_input(body: InputCreate, request: Request):
     crawl_method = judgment.get("crawl_method", "html")
     created_count = 0
     for url in target_sites[:3]:
-        iid = await database.create_input(url, "url", body.interval)
+        iid = await database.create_input(url, "url", body.interval, keyword=raw)
         await database.update_input(
             iid,
             status="active",

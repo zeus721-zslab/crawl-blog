@@ -46,9 +46,12 @@ class GroqProvider(LLMProvider):
             if delta:
                 yield delta
 
-    async def refine_content(self, raw: str, source_url: str) -> dict:
-        text = await self._chat(
-            REFINE_SYSTEM,
-            f"Source: {source_url}\n\nContent:\n{raw[:8000]}",
-        )
+    async def refine_content(self, raw: str, source_url: str, feed_name: str | None = None, keyword: str | None = None) -> dict:
+        parts = [f"Source: {source_url}"]
+        if feed_name:
+            parts.append(f"Feed: {feed_name}")
+        if keyword:
+            parts.append(f"Topic: {keyword}")
+        parts.append(f"\nContent:\n{raw[:8000]}")
+        text = await self._chat(REFINE_SYSTEM, "\n".join(parts))
         return json.loads(text)

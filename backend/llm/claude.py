@@ -44,16 +44,17 @@ class ClaudeProvider(LLMProvider):
         )
         return _parse_json(msg.content[0].text, "judge_input")
 
-    async def refine_content(self, raw: str, source_url: str) -> dict:
+    async def refine_content(self, raw: str, source_url: str, feed_name: str | None = None, keyword: str | None = None) -> dict:
+        parts = [f"Source: {source_url}"]
+        if feed_name:
+            parts.append(f"Feed: {feed_name}")
+        if keyword:
+            parts.append(f"Topic: {keyword}")
+        parts.append(f"\nContent:\n{raw[:8000]}")
         msg = await self._client.messages.create(
             model=REFINE_MODEL,
             max_tokens=4096,
             system=REFINE_SYSTEM,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Source: {source_url}\n\nContent:\n{raw[:8000]}",
-                }
-            ],
+            messages=[{"role": "user", "content": "\n".join(parts)}],
         )
         return _parse_json(msg.content[0].text, "refine_content")

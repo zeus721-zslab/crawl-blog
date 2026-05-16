@@ -10,6 +10,7 @@ CREATE_INPUTS = """
 CREATE TABLE IF NOT EXISTS inputs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100),
+    keyword TEXT,
     value TEXT NOT NULL,
     type VARCHAR(10) NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
@@ -79,12 +80,12 @@ async def init_db():
 
 # --- inputs ---
 
-async def create_input(value: str, input_type: str, interval: str = "6h", name: str | None = None) -> int:
+async def create_input(value: str, input_type: str, interval: str = "6h", name: str | None = None, keyword: str | None = None) -> int:
     async with get_db() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "INSERT INTO inputs (value, type, crawl_interval, name) VALUES (%s, %s, %s, %s)",
-                (value, input_type, interval, name),
+                "INSERT INTO inputs (value, type, crawl_interval, name, keyword) VALUES (%s, %s, %s, %s, %s)",
+                (value, input_type, interval, name, keyword),
             )
             last_id = cur.lastrowid
         await conn.commit()

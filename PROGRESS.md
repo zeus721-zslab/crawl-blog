@@ -1,5 +1,15 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 25: 퀄리티 개선 4가지 (2026-05-17)
+- [x] STEP 25-1: PROGRESS.md 기록
+- [x] STEP 25-2: database.py — keyword 컬럼 추가, create_input keyword 파라미터
+- [x] STEP 25-3: main.py — keyword/topic 입력 시 keyword 저장
+- [x] STEP 25-4: llm/base.py — REFINE_SYSTEM 업데이트, ABC 시그니처 변경
+- [x] STEP 25-5: llm/claude.py — refine_content 시그니처 + user 메시지 변경
+- [x] STEP 25-6: llm/gemini.py, groq.py, ollama.py — refine_content 시그니처 변경
+- [x] STEP 25-7: crawler.py — _extract_article_links + fetch_links 추가
+- [x] STEP 25-8: scheduler.py — name/keyword 전달, RSS 본문 fetch, HTML dedup 개선, skip 처리
+
 ## STEP 24: 피드 name 컬럼 + 탭 UI 개선 (2026-05-17)
 - [x] STEP 24-1: PROGRESS.md 기록
 - [x] STEP 24-2: database.py — inputs.name 컬럼 추가, create_input name 파라미터
