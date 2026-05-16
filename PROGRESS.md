@@ -1,5 +1,9 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 9: CRAWL-BLOG.md MVP 아키텍처 재설계 (2026-05-16)
+- [x] STEP 9-1: PROGRESS.md 기록
+- [x] STEP 9-2: CRAWL-BLOG.md 전면 재작성 (MVP 반영)
+
 ## STEP 8: 디자인 강화 (2026-05-16)
 - [x] STEP 8-1: PROGRESS.md 기록
 - [x] STEP 8-2: globals.css 디자인 시스템 (shimmer, glow, gradient, pulse 키프레임)
