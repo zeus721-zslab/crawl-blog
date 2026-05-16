@@ -1,4 +1,6 @@
 import json
+import logging
+import re
 
 try:
     import anthropic
@@ -7,8 +9,24 @@ except ImportError:
 
 from llm.base import LLMProvider, JUDGE_SYSTEM, REFINE_SYSTEM
 
+log = logging.getLogger(__name__)
+
 JUDGE_MODEL = "claude-haiku-4-5"
 REFINE_MODEL = "claude-sonnet-4-5"
+
+
+def _parse_json(text: str, context: str) -> dict:
+    """Strip markdown code fences if present, then parse JSON. Log raw on failure."""
+    text = text.strip()
+    # Remove ```json ... ``` or ``` ... ``` wrappers
+    text = re.sub(r"^```(?:json)?\s*", "", text)
+    text = re.sub(r"\s*```$", "", text)
+    text = text.strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        log.error("%s JSON parse failed | error=%s | raw=%r", context, e, text)
+        raise
 
 
 class ClaudeProvider(LLMProvider):
@@ -24,7 +42,7 @@ class ClaudeProvider(LLMProvider):
             system=JUDGE_SYSTEM,
             messages=[{"role": "user", "content": f"{label}: {value}"}],
         )
-        return json.loads(msg.content[0].text)
+        return _parse_json(msg.content[0].text, "judge_input")
 
     async def refine_content(self, raw: str, source_url: str) -> dict:
         msg = await self._client.messages.create(
@@ -38,4 +56,4 @@ class ClaudeProvider(LLMProvider):
                 }
             ],
         )
-        return json.loads(msg.content[0].text)
+        return _parse_json(msg.content[0].text, "refine_content")

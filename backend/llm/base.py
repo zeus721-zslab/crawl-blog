@@ -13,24 +13,20 @@ If the input is a keyword or topic sentence (not a URL):
 - Set approved to true if you can recommend at least one site
 - List the URLs in target_sites
 
-Respond ONLY in this JSON format:
-{
-  "approved": true/false,
-  "reason": "brief explanation in Korean",
-  "crawl_method": "rss|html|playwright|null",
-  "target_sites": []
-}"""
+IMPORTANT: Return ONLY a raw JSON object. No markdown, no code blocks, no backticks, no explanation before or after.
+Output must start with { and end with }.
+
+Required JSON format:
+{"approved": true, "reason": "...", "crawl_method": "rss|html|playwright|null", "target_sites": []}"""
 
 REFINE_SYSTEM = """You are a content curator for a personal knowledge blog.
 Given raw crawled HTML/text content, produce a clean blog post in Korean.
 
-Respond ONLY in this JSON format:
-{
-  "title": "concise title",
-  "content": "full markdown content",
-  "summary": "2-3 sentence summary",
-  "tags": ["tag1", "tag2", "tag3"]
-}"""
+IMPORTANT: Return ONLY a raw JSON object. No markdown, no code blocks, no backticks, no explanation before or after.
+Output must start with { and end with }.
+
+Required JSON format:
+{"title": "...", "content": "...", "summary": "...", "tags": ["tag1", "tag2", "tag3"]}"""
 
 
 class LLMProvider(ABC):
