@@ -1,8 +1,14 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 12: ESLint 에러 수정 2 (2026-05-16)
+- [x] STEP 12-1: PROGRESS.md 기록
+- [ ] STEP 12-2: posts/[id]/page.tsx — <a> → <Link /> 교체
+- [ ] STEP 12-3: page.tsx — " → &quot; 교체
+- [ ] STEP 12-4: git push
+
 ## STEP 11: ESLint 에러 수정 (2026-05-16)
 - [x] STEP 11-1: PROGRESS.md 기록
-- [ ] STEP 11-2: manage/page.tsx — <a> → <Link /> 교체 + push
+- [x] STEP 11-2: manage/page.tsx — <a> → <Link /> 교체 + push
 
 ## STEP 10: MVP 아키텍처 코드 반영 (2026-05-16)
 - [x] STEP 10-1: PROGRESS.md 기록

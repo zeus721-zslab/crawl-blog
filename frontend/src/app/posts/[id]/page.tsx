@@ -1,5 +1,6 @@
 'use client'
 import { use, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { apiFetch } from '@/lib/api'
 
@@ -113,12 +114,12 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
           className="text-center space-y-4"
         >
           <p className="text-zinc-500 text-base">글을 찾을 수 없습니다</p>
-          <a
+          <Link
             href="/"
             className="inline-block text-sm px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300 transition-colors"
           >
             ← 목록으로
-          </a>
+          </Link>
         </motion.div>
       </div>
     )
@@ -129,9 +130,9 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
       {/* nav */}
       <div className="border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <a href="/" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1.5">
+          <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1.5">
             <span>←</span> 목록으로
-          </a>
+          </Link>
           <span className="gradient-text text-sm font-bold">crawl-blog</span>
         </div>
       </div>
@@ -209,7 +210,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
 
         {/* ── footer ── */}
         <div className="mt-14 pt-6 border-t border-zinc-900">
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 transition-colors group"
           >
@@ -221,7 +222,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
               ←
             </motion.span>
             목록으로 돌아가기
-          </a>
+          </Link>
         </div>
       </motion.article>
     </div>

@@ -294,7 +294,7 @@ export default function HomePage() {
             >
               <div className="flex items-center gap-2 text-sm pb-1">
                 <span className="text-zinc-500">검색:</span>
-                <span className="text-zinc-300 font-medium">"{search}"</span>
+                <span className="text-zinc-300 font-medium">&quot;{search}&quot;</span>
                 <button
                   onClick={clearSearch}
                   className="text-zinc-600 hover:text-zinc-400 text-xs ml-1 transition-colors"
