@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     groq_api_key: Optional[str] = None
     ollama_base_url: str = "http://localhost:11434"
 
+    # database
+    db_host: str = "zslab_mariadb"
+    db_port: int = 3306
+    db_user: str = "crawl_blog"
+    db_password: str = ""
+    db_name: str = "crawl_blog"
+
     # limits
     claude_daily_limit: int = 100
 

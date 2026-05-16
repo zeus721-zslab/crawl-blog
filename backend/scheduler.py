@@ -8,6 +8,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 import database
 import crawler
 from llm.factory import get_llm
+from settings import settings
 import rate
 
 log = logging.getLogger(__name__)
@@ -15,8 +16,12 @@ log = logging.getLogger(__name__)
 INTERVAL_MAP = {"1h": 1, "6h": 6, "24h": 24}
 MAX_REFINE_PER_RUN = 3  # Sonnet refine cap per crawl run
 
+_jobstore_url = (
+    f"mysql+pymysql://{settings.db_user}:{settings.db_password}"
+    f"@{settings.db_host}:{settings.db_port}/{settings.db_name}"
+)
 _jobstores = {
-    "default": SQLAlchemyJobStore(url="sqlite:////app/data/jobs.db")
+    "default": SQLAlchemyJobStore(url=_jobstore_url)
 }
 _job_defaults = {
     "coalesce": True,       # merge missed runs into one

@@ -29,6 +29,11 @@ services:
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
       - DOMAIN_BLACKLIST=${DOMAIN_BLACKLIST:-}
       - LLM_PROVIDER=${LLM_PROVIDER:-claude}
+      - DB_HOST=${DB_HOST:-zslab_mariadb}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER:-crawl_blog}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-crawl_blog}
     volumes:
       - crawl-blog-data:/app/data
     networks:

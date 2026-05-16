@@ -1,5 +1,25 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 20: SQLite → MariaDB 전환 (2026-05-17)
+- [x] STEP 20-1: PROGRESS.md 기록
+- [x] STEP 20-2: requirements.txt — aiosqlite → aiomysql + cryptography
+- [x] STEP 20-3: settings.py — DB 접속 필드 추가
+- [x] STEP 20-4: database.py — aiomysql 전환 전면 수정
+- [x] STEP 20-5: .env.example — DB 환경변수 추가
+- [x] STEP 20-6: docker-compose — backend DB 환경변수 추가
+- [x] STEP 20-7: scheduler.py — jobstore URL sqlite → mysql+pymysql
+- [x] STEP 20-8: requirements.txt — pymysql 추가 (SQLAlchemy jobstore용)
+
+## STEP 19: SQLite → MariaDB 전환 준비 파일 확인 (2026-05-17)
+- [x] STEP 19-1: PROGRESS.md 기록
+- [x] STEP 19-2: database.py 확인
+- [x] STEP 19-3: requirements.txt 확인
+- [x] STEP 19-4: .env.example 확인
+
+## STEP 18: DB CHECK constraint 'pending' 추가 (2026-05-17)
+- [x] STEP 18-1: PROGRESS.md 기록
+- [x] STEP 18-2: database.py CHECK constraint 수정
+
 ## STEP 17: deploy.yml ssh-action 버전 고정 (2026-05-16)
 - [x] STEP 17-1: PROGRESS.md 기록
 - [x] STEP 17-2: appleboy/ssh-action@v1 → @v1.0.3 변경 + push
