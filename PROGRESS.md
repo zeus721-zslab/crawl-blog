@@ -1,9 +1,13 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 17: deploy.yml ssh-action 버전 고정 (2026-05-16)
+- [x] STEP 17-1: PROGRESS.md 기록
+- [ ] STEP 17-2: appleboy/ssh-action@v1 → @v1.0.3 변경 + push
+
 ## STEP 16: database.py get_db() Thread 재시작 오류 수정 (2026-05-16)
 - [x] STEP 16-1: PROGRESS.md 기록
 - [x] STEP 16-2: get_db() → asynccontextmanager 전환, 호출부 전체 수정
-- [ ] STEP 16-3: git push
+- [x] STEP 16-3: git push
 
 ## STEP 15: deploy.yml + Dockerfile 빌드 환경변수 수정 (2026-05-16)
 - [x] STEP 15-1: PROGRESS.md 기록
