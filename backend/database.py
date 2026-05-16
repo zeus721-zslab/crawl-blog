@@ -1,6 +1,8 @@
 import aiosqlite
 import json
+from contextlib import asynccontextmanager
 from datetime import datetime
+from typing import AsyncGenerator
 
 DB_PATH = "/app/data/crawl-blog.db"
 
@@ -46,15 +48,16 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 """
 
 
-async def get_db() -> aiosqlite.Connection:
-    db = await aiosqlite.connect(DB_PATH)
-    db.row_factory = aiosqlite.Row
-    await db.execute("PRAGMA journal_mode=WAL")
-    return db
+@asynccontextmanager
+async def get_db() -> AsyncGenerator[aiosqlite.Connection, None]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        await db.execute("PRAGMA journal_mode=WAL")
+        yield db
 
 
 async def init_db():
-    async with await get_db() as db:
+    async with get_db() as db:
         await db.execute(CREATE_INPUTS)
         await db.execute(CREATE_POSTS)
         await db.execute(CREATE_RATE_LIMITS)
@@ -64,7 +67,7 @@ async def init_db():
 # --- inputs ---
 
 async def create_input(value: str, input_type: str, interval: str = "6h") -> int:
-    async with await get_db() as db:
+    async with get_db() as db:
         cur = await db.execute(
             "INSERT INTO inputs (value, type, crawl_interval) VALUES (?, ?, ?)",
             (value, input_type, interval),
@@ -74,7 +77,7 @@ async def create_input(value: str, input_type: str, interval: str = "6h") -> int
 
 
 async def get_inputs() -> list[dict]:
-    async with await get_db() as db:
+    async with get_db() as db:
         cur = await db.execute(
             "SELECT * FROM inputs WHERE status != 'deleted' ORDER BY created_at DESC"
         )
@@ -83,7 +86,7 @@ async def get_inputs() -> list[dict]:
 
 
 async def get_input(input_id: int) -> dict | None:
-    async with await get_db() as db:
+    async with get_db() as db:
         cur = await db.execute("SELECT * FROM inputs WHERE id = ?", (input_id,))
         row = await cur.fetchone()
         return dict(row) if row else None
@@ -93,7 +96,7 @@ async def update_input(input_id: int, **fields) -> None:
     if not fields:
         return
     cols = ", ".join(f"{k} = ?" for k in fields)
-    async with await get_db() as db:
+    async with get_db() as db:
         await db.execute(
             f"UPDATE inputs SET {cols} WHERE id = ?",
             (*fields.values(), input_id),
@@ -102,7 +105,7 @@ async def update_input(input_id: int, **fields) -> None:
 
 
 async def delete_input(input_id: int) -> None:
-    async with await get_db() as db:
+    async with get_db() as db:
         await db.execute(
             "UPDATE inputs SET status = 'deleted' WHERE id = ?", (input_id,)
         )
@@ -114,7 +117,7 @@ async def delete_input(input_id: int) -> None:
 async def create_post(
     input_id: int, title: str, content: str, summary: str, tags: list[str], source_url: str
 ) -> int:
-    async with await get_db() as db:
+    async with get_db() as db:
         cur = await db.execute(
             "INSERT INTO posts (input_id, title, content, summary, tags, source_url) VALUES (?, ?, ?, ?, ?, ?)",
             (input_id, title, content, summary, json.dumps(tags, ensure_ascii=False), source_url),
@@ -146,7 +149,7 @@ async def get_posts(
     where = " AND ".join(wheres)
     offset = (page - 1) * per_page
 
-    async with await get_db() as db:
+    async with get_db() as db:
         cur = await db.execute(f"SELECT COUNT(*) FROM posts WHERE {where}", params)
         total = (await cur.fetchone())[0]
 
@@ -166,7 +169,7 @@ async def get_posts(
 
 
 async def get_post(post_id: int) -> dict | None:
-    async with await get_db() as db:
+    async with get_db() as db:
         cur = await db.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
         row = await cur.fetchone()
         if not row:
@@ -177,13 +180,13 @@ async def get_post(post_id: int) -> dict | None:
 
 
 async def source_url_exists(source_url: str) -> bool:
-    async with await get_db() as db:
+    async with get_db() as db:
         cur = await db.execute("SELECT 1 FROM posts WHERE source_url = ?", (source_url,))
         return await cur.fetchone() is not None
 
 
 async def mark_read(post_id: int) -> None:
-    async with await get_db() as db:
+    async with get_db() as db:
         await db.execute(
             "UPDATE posts SET is_read = 1, is_new = 0 WHERE id = ?", (post_id,)
         )
@@ -193,14 +196,14 @@ async def mark_read(post_id: int) -> None:
 # --- rate limiting ---
 
 async def get_rate_limit(ip: str) -> dict | None:
-    async with await get_db() as db:
+    async with get_db() as db:
         cur = await db.execute("SELECT * FROM rate_limits WHERE ip = ?", (ip,))
         row = await cur.fetchone()
         return dict(row) if row else None
 
 
 async def record_fail(ip: str) -> int:
-    async with await get_db() as db:
+    async with get_db() as db:
         await db.execute(
             "INSERT INTO rate_limits (ip, fail_count) VALUES (?, 1) "
             "ON CONFLICT(ip) DO UPDATE SET fail_count = fail_count + 1",
@@ -213,7 +216,7 @@ async def record_fail(ip: str) -> int:
 
 
 async def lock_ip(ip: str, until: datetime) -> None:
-    async with await get_db() as db:
+    async with get_db() as db:
         await db.execute(
             "UPDATE rate_limits SET locked_until = ? WHERE ip = ?",
             (until.isoformat(), ip),
@@ -222,7 +225,7 @@ async def lock_ip(ip: str, until: datetime) -> None:
 
 
 async def reset_fails(ip: str) -> None:
-    async with await get_db() as db:
+    async with get_db() as db:
         await db.execute(
             "UPDATE rate_limits SET fail_count = 0, locked_until = NULL WHERE ip = ?",
             (ip,),
