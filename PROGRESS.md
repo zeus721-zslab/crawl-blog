@@ -1,5 +1,11 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 15: deploy.yml + Dockerfile 빌드 환경변수 수정 (2026-05-16)
+- [x] STEP 15-1: PROGRESS.md 기록
+- [x] STEP 15-2: frontend/Dockerfile — builder 스테이지에 ARG/ENV 추가
+- [x] STEP 15-3: deploy.yml — build-args 주입, repo 소문자 정규화
+- [ ] STEP 15-4: git push
+
 ## STEP 14: UI 텍스트/shimmer/SSL 3종 작업 (2026-05-16)
 - [x] STEP 14-1: PROGRESS.md 기록
 - [x] STEP 14-2: UI 텍스트 인풋→피드 전환 (manage/page.tsx)
