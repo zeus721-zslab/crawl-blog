@@ -28,6 +28,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="crawl-blog API", lifespan=lifespan)
 
+_bg_tasks: set[asyncio.Task] = set()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins.split(","),
@@ -226,5 +228,7 @@ async def trigger_crawl(input_id: int, body: CrawlTrigger, request: Request):
         raise HTTPException(status_code=404, detail="Input not found")
     if inp["status"] == "crawling":
         raise HTTPException(status_code=409, detail="Already crawling")
-    asyncio.create_task(sched.crawl_input(input_id))
+    task = asyncio.create_task(sched.crawl_input(input_id))
+    _bg_tasks.add(task)
+    task.add_done_callback(_bg_tasks.discard)
     return {"ok": True}

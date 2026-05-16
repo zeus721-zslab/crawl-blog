@@ -62,14 +62,17 @@ async def _fetch_html_simple(url: str) -> str:
 
 async def _fetch_html_playwright(url: str) -> str:
     from playwright.async_api import async_playwright
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(args=["--no-sandbox"])
+    pw = await async_playwright().start()
+    try:
+        browser = await pw.chromium.launch(args=["--no-sandbox"])
         try:
             page = await browser.new_page()
             await page.goto(url, wait_until="networkidle", timeout=30000)
             html = await page.content()
         finally:
             await browser.close()
+    finally:
+        await pw.stop()
     return _extract_text(html)
 
 

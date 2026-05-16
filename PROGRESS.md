@@ -1,5 +1,10 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 23: scheduler async generator / task destroyed 에러 수정 (2026-05-17)
+- [x] STEP 23-1: PROGRESS.md 기록
+- [x] STEP 23-2: crawler.py — async_playwright() async with → start()/stop() 패턴 전환
+- [x] STEP 23-3: main.py — create_task 참조 유지 (_bg_tasks set)
+
 ## STEP 22: refine_content max_tokens 및 REFINE_SYSTEM 프롬프트 강화 (2026-05-17)
 - [x] STEP 22-1: PROGRESS.md 기록
 - [x] STEP 22-2: claude.py refine_content max_tokens 2048 → 4096
