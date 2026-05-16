@@ -38,6 +38,7 @@ services:
       - crawl-blog-data:/app/data
     networks:
       - crawl-blog-net
+      - zslab_zslab_net
       - gateway_net
 
 volumes:

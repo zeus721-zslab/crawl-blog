@@ -1,5 +1,10 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 21: docker-compose backend networks zslab_zslab_net 추가 (2026-05-17)
+- [x] STEP 21-1: PROGRESS.md 기록
+- [x] STEP 21-2: docker-compose backend networks에 zslab_zslab_net 추가
+- [ ] STEP 21-3: git push
+
 ## STEP 20: SQLite → MariaDB 전환 (2026-05-17)
 - [x] STEP 20-1: PROGRESS.md 기록
 - [x] STEP 20-2: requirements.txt — aiosqlite → aiomysql + cryptography
