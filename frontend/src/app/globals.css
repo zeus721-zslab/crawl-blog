@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --accent-from: #6366f1;
+  --accent-to:   #22d3ee;
 }
 
 @theme inline {
@@ -12,15 +14,210 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 transparent;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────── */
+
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* ── Clamp ─────────────────────────────────────────────────────── */
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Shimmer skeleton ──────────────────────────────────────────── */
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    #18181b 25%,
+    #27272a 50%,
+    #18181b 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ── Gradient text ─────────────────────────────────────────────── */
+
+.gradient-text {
+  background: linear-gradient(135deg, #818cf8 0%, #22d3ee 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Primary button ────────────────────────────────────────────── */
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%);
+  color: #fff;
+  font-weight: 600;
+  transition: opacity 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.88;
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.35);
+}
+.btn-primary:active:not(:disabled) { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Input focus glow ──────────────────────────────────────────── */
+
+.input-glow {
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+.input-glow:focus {
+  border-color: rgba(99, 102, 241, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Card hover glow ───────────────────────────────────────────── */
+
+.card-hover {
+  will-change: transform, opacity;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.card-hover:hover {
+  border-color: rgba(99, 102, 241, 0.2) !important;
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Active status glow variants ───────────────────────────────── */
+
+.status-glow-active  { box-shadow: 0 0 8px rgba(52, 211, 153, 0.6); }
+.status-glow-crawl   { box-shadow: 0 0 8px rgba(96, 165, 250, 0.6); }
+.status-glow-fail    { box-shadow: 0 0 8px rgba(248, 113, 113, 0.6); }
+
+/* ── NEW badge pulse ring ──────────────────────────────────────── */
+
+@keyframes badge-ring {
+  0%   { box-shadow: 0 0 0 0   rgba(59, 130, 246, 0.7); }
+  70%  { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(59, 130, 246, 0);   }
+}
+.badge-pulse {
+  animation: badge-ring 2.2s ease-out infinite;
+}
+
+/* ── Streaming cursor blink ────────────────────────────────────── */
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.stream-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  background: #34d399;
+  border-radius: 1px;
+  vertical-align: text-bottom;
+  margin-left: 2px;
+  animation: cursor-blink 0.8s step-end infinite;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.8);
+}
+
+/* ── Stream panel active border ────────────────────────────────── */
+
+.stream-panel-active {
+  border-color: rgba(34, 211, 238, 0.3);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.1) inset;
+}
+
+/* ── Tab indicator ─────────────────────────────────────────────── */
+
+.tab-active {
+  position: relative;
+}
+.tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #6366f1, #22d3ee);
+}
+
+/* ── Gradient border card ──────────────────────────────────────── */
+
+.gradient-border {
+  position: relative;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(34,211,238,0.1));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Post content ──────────────────────────────────────────────── */
+
+.post-content h1 { font-size: 1.5rem; font-weight: 700; color: #f4f4f5; margin: 2rem 0 1rem; line-height: 1.3; }
+.post-content h2 { font-size: 1.25rem; font-weight: 700; color: #f4f4f5; margin: 1.75rem 0 0.75rem; line-height: 1.35; }
+.post-content h3 { font-size: 1.1rem; font-weight: 600; color: #e4e4e7; margin: 1.5rem 0 0.5rem; }
+.post-content p  { margin: 0.9rem 0; line-height: 1.8; }
+.post-content strong { color: #e4e4e7; font-weight: 600; }
+.post-content em { color: #a1a1aa; font-style: italic; }
+.post-content code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.875em;
+  color: #34d399;
+  background: #18181b;
+  padding: 0.15em 0.4em;
+  border-radius: 0.3rem;
+  border: 1px solid #27272a;
+}
+.post-content a { color: #818cf8; text-decoration: underline; text-underline-offset: 3px; }
+.post-content a:hover { color: #a5b4fc; }
+.post-content ul { list-style: none; padding-left: 0; margin: 0.9rem 0; }
+.post-content li {
+  margin: 0.45rem 0;
+  padding-left: 1.25rem;
+  position: relative;
+}
+.post-content li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: #6366f1;
+  font-weight: 700;
+}
+.post-content blockquote {
+  border-left: 2px solid #6366f1;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: #a1a1aa;
+  font-style: italic;
 }

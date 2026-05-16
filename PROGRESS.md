@@ -1,8 +1,23 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 8: 디자인 강화 (2026-05-16)
+- [x] STEP 8-1: PROGRESS.md 기록
+- [x] STEP 8-2: globals.css 디자인 시스템 (shimmer, glow, gradient, pulse 키프레임)
+- [x] STEP 8-3: manage/page.tsx 전면 고도화
+- [x] STEP 8-4: page.tsx 전면 고도화
+- [x] STEP 8-5: posts/[id]/page.tsx 전면 고도화
+
+## STEP 7: M2 Frontend UI 구현 (2026-05-16)
+- [x] STEP 7-1: PROGRESS.md STEP 7 항목 기록
+- [x] STEP 7-2: globals.css 다크 테마 + layout.tsx 메타데이터 업데이트
+- [x] STEP 7-3: frontend/src/lib/api.ts 생성 (API 유틸)
+- [x] STEP 7-4: manage/page.tsx 구현 (비밀번호 게이트, 인풋 관리, SSE 스트리밍, 시스템 상태)
+- [x] STEP 7-5: page.tsx 구현 (블로그 메인 - 글 목록, 탭, 검색)
+- [x] STEP 7-6: posts/[id]/page.tsx 구현 (글 상세)
+
 ## STEP 6: backend Dockerfile Playwright 설치 오류 수정 (2026-05-16)
 - [x] STEP 6-1: Dockerfile 수정 (--with-deps 제거, Debian 패키지 직접 설치)
-- [ ] STEP 6-2: 커밋 + push
+- [x] STEP 6-2: 커밋 + push
 
 ## STEP 5: frontend package-lock.json 재생성 (2026-05-16)
 - [x] STEP 5-1: Docker로 npm install 실행 (framer-motion 반영)
