@@ -176,6 +176,12 @@ async def get_post(post_id: int) -> dict | None:
         return p
 
 
+async def source_url_exists(source_url: str) -> bool:
+    async with await get_db() as db:
+        cur = await db.execute("SELECT 1 FROM posts WHERE source_url = ?", (source_url,))
+        return await cur.fetchone() is not None
+
+
 async def mark_read(post_id: int) -> None:
     async with await get_db() as db:
         await db.execute(

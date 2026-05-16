@@ -1,5 +1,19 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 11: ESLint 에러 수정 (2026-05-16)
+- [x] STEP 11-1: PROGRESS.md 기록
+- [ ] STEP 11-2: manage/page.tsx — <a> → <Link /> 교체 + push
+
+## STEP 10: MVP 아키텍처 코드 반영 (2026-05-16)
+- [x] STEP 10-1: PROGRESS.md 기록
+- [x] STEP 10-2: backend/crawler.py — RSS→HTML→Playwright fallback
+- [x] STEP 10-3: backend/scheduler.py — persistent jobstore + coalesce + dedup + 3건 캡
+- [x] STEP 10-4: backend/llm/ — Haiku(판단) / Sonnet(정제) 분리, stream_judge 제거
+- [x] STEP 10-5: backend/rate.py + database.py — refine 카운터 + source_url_exists
+- [x] STEP 10-6: backend/main.py — stream 엔드포인트 제거, URL 전용 검증
+- [x] STEP 10-7: backend/requirements.txt — sqlalchemy 추가
+- [x] STEP 10-8: frontend/manage/page.tsx — SSE 제거, 판단 결과 카드
+
 ## STEP 9: CRAWL-BLOG.md MVP 아키텍처 재설계 (2026-05-16)
 - [x] STEP 9-1: PROGRESS.md 기록
 - [x] STEP 9-2: CRAWL-BLOG.md 전면 재작성 (MVP 반영)

@@ -5,15 +5,13 @@ from datetime import datetime, timedelta
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import database
 import scheduler as sched
+import rate
 from llm.factory import get_llm
 from settings import settings
-
-llm_call_count = 0
 
 
 @asynccontextmanager
@@ -66,13 +64,6 @@ async def auth_request(request: Request, password: str) -> None:
     await database.reset_fails(request.client.host)
 
 
-def check_llm_limit():
-    global llm_call_count
-    if llm_call_count >= settings.claude_daily_limit:
-        raise HTTPException(status_code=429, detail="LLM daily limit reached")
-    llm_call_count += 1
-
-
 # --- schemas ---
 
 class InputCreate(BaseModel):
@@ -99,12 +90,14 @@ class CrawlTrigger(BaseModel):
 @app.post("/api/inputs", status_code=201)
 async def create_input(body: InputCreate, request: Request):
     await auth_request(request, body.password)
-    check_llm_limit()
 
-    input_type = "url" if body.value.startswith("http") else "keyword"
-    input_id = await database.create_input(body.value, input_type, body.interval)
+    url = body.value.strip()
+    if not url.startswith("http://") and not url.startswith("https://"):
+        raise HTTPException(status_code=400, detail="URL must start with http:// or https://")
 
-    judgment = await get_llm().judge_input(body.value)
+    input_id = await database.create_input(url, "url", body.interval)
+
+    judgment = await get_llm().judge_input(url)
     approved = judgment.get("approved", False)
     status = "active" if approved else "rejected"
 
@@ -198,7 +191,7 @@ async def get_status():
     return {
         "overall": overall,
         "active_count": len(active),
-        "llm_remaining": settings.claude_daily_limit - llm_call_count,
+        "llm_remaining": rate.remaining(),
         "scheduler": sched.get_scheduler_status(),
         "last_crawl_at": last_crawl,
     }
@@ -216,20 +209,3 @@ async def trigger_crawl(input_id: int, body: CrawlTrigger, request: Request):
         raise HTTPException(status_code=409, detail="Already crawling")
     asyncio.create_task(sched.crawl_input(input_id))
     return {"ok": True}
-
-
-# --- claude stream ---
-
-@app.get("/api/claude/stream")
-async def claude_stream(value: str, request: Request):
-    check_llm_limit()
-
-    async def event_stream():
-        try:
-            async for text in get_llm().stream_judge(value):
-                yield f"data: {text}\n\n"
-            yield "data: [DONE]\n\n"
-        except Exception as e:
-            yield f"data: [ERROR] {str(e)}\n\n"
-
-    return StreamingResponse(event_stream(), media_type="text/event-stream")

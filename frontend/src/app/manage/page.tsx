@@ -1,7 +1,8 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { API, apiFetch } from '@/lib/api'
+import { apiFetch } from '@/lib/api'
 
 type InputStatus = 'active' | 'crawling' | 'failed' | 'rejected' | 'deleted'
 type Period = '1h' | '6h' | '24h'
@@ -28,6 +29,14 @@ interface SysStatus {
   llm_remaining: number
   scheduler: { running: boolean; job_count: number }
   last_crawl_at: string | null
+}
+
+interface JudgmentResult {
+  id: number
+  value: string
+  approved: boolean
+  reason: string
+  crawl_method: string | null
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -68,9 +77,9 @@ function fmtTime(iso: string | null): string {
 // ── SystemStatusBar ────────────────────────────────────────────────────────
 
 const OVERALL_CFG = {
-  normal:  { label: '정상', icon: '●', dotCls: 'bg-emerald-400', dotGlow: 'shadow-[0_0_8px_rgba(52,211,153,0.8)]', wrap: 'border-emerald-500/15 bg-emerald-500/5' },
-  warning: { label: '경고', icon: '▲', dotCls: 'bg-amber-400',   dotGlow: 'shadow-[0_0_8px_rgba(251,191,36,0.8)]',  wrap: 'border-amber-500/15 bg-amber-500/5' },
-  stopped: { label: '중단', icon: '■', dotCls: 'bg-red-400',     dotGlow: 'shadow-[0_0_8px_rgba(248,113,113,0.8)]', wrap: 'border-red-500/15 bg-red-500/5' },
+  normal:  { label: '정상', dotCls: 'bg-emerald-400', dotGlow: 'shadow-[0_0_8px_rgba(52,211,153,0.8)]', wrap: 'border-emerald-500/15 bg-emerald-500/5' },
+  warning: { label: '경고', dotCls: 'bg-amber-400',   dotGlow: 'shadow-[0_0_8px_rgba(251,191,36,0.8)]',  wrap: 'border-amber-500/15 bg-amber-500/5' },
+  stopped: { label: '중단', dotCls: 'bg-red-400',     dotGlow: 'shadow-[0_0_8px_rgba(248,113,113,0.8)]', wrap: 'border-red-500/15 bg-red-500/5' },
 }
 
 function SystemStatusBar({ status }: { status: SysStatus | null }) {
@@ -88,7 +97,6 @@ function SystemStatusBar({ status }: { status: SysStatus | null }) {
       className={`rounded-2xl border p-4 mb-6 ${oc.wrap}`}
     >
       <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
-        {/* overall */}
         <div className="flex items-center gap-2.5">
           <span className="relative flex">
             <motion.span
@@ -105,7 +113,6 @@ function SystemStatusBar({ status }: { status: SysStatus | null }) {
           </span>
         </div>
 
-        {/* stat chips */}
         <div className="flex flex-wrap gap-2">
           <StatChip label="활성 인풋" value={`${status.active_count}개`} />
           <StatChip
@@ -138,6 +145,49 @@ function StatChip({ label, value, warn, ok }: {
         {value}
       </b>
     </span>
+  )
+}
+
+// ── JudgmentCard ────────────────────────────────────────────────────────────
+
+function JudgmentCard({ result, onDismiss }: { result: JudgmentResult; onDismiss: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -8, scale: 0.96, transition: { duration: 0.18 } }}
+      transition={SPRING}
+      className={`mt-5 p-4 rounded-xl border ${
+        result.approved
+          ? 'bg-emerald-950/30 border-emerald-900/40'
+          : 'bg-red-950/30 border-red-900/40'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className={`text-sm font-semibold ${result.approved ? 'text-emerald-400' : 'text-red-400'}`}>
+              {result.approved ? '✓ 승인' : '✗ 거절'}
+            </span>
+            {result.crawl_method && (
+              <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-zinc-800/80 text-zinc-500 border border-zinc-700/50">
+                {result.crawl_method}
+              </span>
+            )}
+          </div>
+          <p className={`text-sm leading-relaxed ${result.approved ? 'text-emerald-300/80' : 'text-red-300/80'}`}>
+            {result.reason}
+          </p>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={onDismiss}
+          className="text-zinc-600 hover:text-zinc-400 transition-colors text-lg leading-none shrink-0 mt-0.5"
+        >
+          ×
+        </motion.button>
+      </div>
+    </motion.div>
   )
 }
 
@@ -204,10 +254,9 @@ function InputCard({
       {/* ── header ── */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0 space-y-2">
-          {/* badges row */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-500 border border-zinc-700/60 font-mono tracking-wide">
-              {input.type === 'url' ? 'URL' : 'KEYWORD'}
+              URL
             </span>
 
             <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium flex items-center gap-1.5 ${sc.chip}`}>
@@ -230,7 +279,6 @@ function InputCard({
           <p className="text-base font-medium text-zinc-100 break-all leading-snug">{input.value}</p>
         </div>
 
-        {/* action buttons */}
         <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
           {(input.status === 'active' || input.status === 'failed') && (
             <motion.button
@@ -339,11 +387,8 @@ export default function ManagePage() {
   const [value,      setValue]      = useState('')
   const [period,     setPeriod]     = useState<Period>('6h')
   const [submitting, setSubmitting] = useState(false)
-  const [streamText, setStreamText] = useState('')
-  const [streamDone, setStreamDone] = useState(false)
   const [formError,  setFormError]  = useState('')
-
-  const streamBoxRef = useRef<HTMLDivElement>(null)
+  const [lastResult, setLastResult] = useState<JudgmentResult | null>(null)
 
   useEffect(() => {
     if (!unlocked) return
@@ -352,11 +397,6 @@ export default function ManagePage() {
     const t = window.setInterval(loadStatus, 15_000)
     return () => window.clearInterval(t)
   }, [unlocked])
-
-  useEffect(() => {
-    if (streamBoxRef.current)
-      streamBoxRef.current.scrollTop = streamBoxRef.current.scrollHeight
-  }, [streamText])
 
   async function loadInputs() {
     try { setInputs(await apiFetch<CrawlInput[]>('/api/inputs')) } catch { /* silent */ }
@@ -375,34 +415,22 @@ export default function ManagePage() {
     const trimmed = value.trim()
     if (!trimmed) return
     setFormError('')
-    setStreamText('')
-    setStreamDone(false)
+    setLastResult(null)
     setSubmitting(true)
 
-    // Phase 1 — SSE stream for UX display
-    await new Promise<void>(resolve => {
-      const es = new EventSource(`${API}/api/claude/stream?value=${encodeURIComponent(trimmed)}`)
-      es.onmessage = evt => {
-        const d = evt.data as string
-        if (d === '[DONE]') {
-          es.close(); setStreamDone(true); resolve()
-        } else if (d.startsWith('[ERROR]')) {
-          setFormError(d.replace('[ERROR] ', '')); es.close(); resolve()
-        } else {
-          setStreamText(prev => prev + d)
-        }
-      }
-      es.onerror = () => { es.close(); resolve() }
-    })
-
-    // Phase 2 — register
     try {
-      await apiFetch('/api/inputs', {
+      const res = await apiFetch<{ id: number; approved: boolean; judgment: { reason: string; crawl_method: string | null } }>('/api/inputs', {
         method: 'POST',
         body: JSON.stringify({ value: trimmed, password, interval: period }),
       })
+      setLastResult({
+        id: res.id,
+        value: trimmed,
+        approved: res.approved,
+        reason: res.judgment.reason,
+        crawl_method: res.judgment.crawl_method,
+      })
       setValue('')
-      setStreamText('')
       await loadInputs()
       await loadStatus()
     } catch (err: unknown) {
@@ -432,7 +460,6 @@ export default function ManagePage() {
   if (!unlocked) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-        {/* background glow */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -446,13 +473,11 @@ export default function ManagePage() {
           transition={SPRING}
           className="w-full max-w-sm relative"
         >
-          {/* logo */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold gradient-text mb-1">crawl-blog</h1>
             <p className="text-zinc-500 text-sm">인풋 관리 · 비밀번호 필요</p>
           </div>
 
-          {/* card */}
           <div className="gradient-border bg-zinc-900 rounded-2xl p-6 space-y-3">
             <input
               type="password"
@@ -473,7 +498,7 @@ export default function ManagePage() {
           </div>
 
           <p className="mt-5 text-center">
-            <a href="/" className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors">← 블로그로 돌아가기</a>
+            <Link href="/" className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors">← 블로그로 돌아가기</Link>
           </p>
         </motion.div>
       </div>
@@ -487,7 +512,7 @@ export default function ManagePage() {
       {/* nav */}
       <div className="border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <a href="/" className="text-lg font-bold gradient-text">crawl-blog</a>
+          <Link href="/" className="text-lg font-bold gradient-text">crawl-blog</Link>
           <span className="text-sm text-zinc-500 font-medium">인풋 관리</span>
         </div>
       </div>
@@ -510,10 +535,10 @@ export default function ManagePage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
-              type="text"
+              type="url"
               value={value}
               onChange={e => setValue(e.target.value)}
-              placeholder="키워드 또는 URL 입력"
+              placeholder="https://example.com/feed.xml"
               disabled={submitting}
               className="input-glow w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-base text-zinc-100 placeholder-zinc-600 disabled:opacity-50"
             />
@@ -542,42 +567,23 @@ export default function ManagePage() {
                 disabled={submitting || !value.trim()}
                 className="btn-primary ml-auto px-6 py-2 rounded-xl text-sm"
               >
-                {submitting ? '분석 중...' : '등록'}
+                {submitting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 border border-white/40 border-t-white rounded-full animate-spin" />
+                    판단 중...
+                  </span>
+                ) : '등록'}
               </motion.button>
             </div>
           </form>
 
-          {/* SSE streaming panel */}
+          {/* Judgment result card */}
           <AnimatePresence>
-            {(submitting || streamText) && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0, transition: { duration: 0.2 } }}
-                className="mt-5 overflow-hidden"
-              >
-                <div
-                  ref={streamBoxRef}
-                  className={`bg-zinc-950 rounded-xl border p-4 font-mono text-sm text-emerald-400 max-h-52 overflow-y-auto leading-relaxed ${
-                    submitting && !streamDone ? 'stream-panel-active' : 'border-zinc-800'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-zinc-600 text-xs">Claude 판단 과정</span>
-                    {submitting && !streamDone && (
-                      <motion.span
-                        animate={{ opacity: [1, 0.3, 1] }}
-                        transition={{ repeat: Infinity, duration: 1.2 }}
-                        className="text-xs text-cyan-500"
-                      >
-                        스트리밍 중
-                      </motion.span>
-                    )}
-                  </div>
-                  <span className="whitespace-pre-wrap">{streamText}</span>
-                  {submitting && !streamDone && <span className="stream-cursor" />}
-                </div>
-              </motion.div>
+            {lastResult && (
+              <JudgmentCard
+                result={lastResult}
+                onDismiss={() => setLastResult(null)}
+              />
             )}
           </AnimatePresence>
 
@@ -620,7 +626,7 @@ export default function ManagePage() {
               className="text-center py-20"
             >
               <p className="text-zinc-600 text-base mb-2">등록된 인풋이 없습니다</p>
-              <p className="text-zinc-700 text-sm">위 폼에서 키워드나 URL을 등록해보세요</p>
+              <p className="text-zinc-700 text-sm">위 폼에서 URL을 등록해보세요</p>
             </motion.div>
           ) : (
             <AnimatePresence mode="popLayout">

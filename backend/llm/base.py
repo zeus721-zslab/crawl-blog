@@ -1,18 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import AsyncIterator
 
 JUDGE_SYSTEM = """You are a web crawling feasibility judge.
-Given a keyword or URL, decide:
+Given a URL, decide:
 1. Whether it can be crawled (legal, accessible, non-harmful)
-2. The best crawling method: rss | html | search
-3. Recommended target sites (if keyword input)
+2. The best crawling method: rss | html | playwright
 
 Respond ONLY in this JSON format:
 {
   "approved": true/false,
   "reason": "brief explanation",
-  "crawl_method": "rss|html|search|null",
-  "target_sites": ["url1", "url2"] or []
+  "crawl_method": "rss|html|playwright|null"
 }"""
 
 REFINE_SYSTEM = """You are a content curator for a personal knowledge blog.
@@ -30,9 +27,6 @@ Respond ONLY in this JSON format:
 class LLMProvider(ABC):
     @abstractmethod
     async def judge_input(self, value: str) -> dict: ...
-
-    @abstractmethod
-    async def stream_judge(self, value: str) -> AsyncIterator[str]: ...
 
     @abstractmethod
     async def refine_content(self, raw: str, source_url: str) -> dict: ...
