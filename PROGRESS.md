@@ -1,12 +1,21 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 14: UI 텍스트/shimmer/SSL 3종 작업 (2026-05-16)
+- [x] STEP 14-1: PROGRESS.md 기록
+- [x] STEP 14-2: UI 텍스트 인풋→피드 전환 (manage/page.tsx)
+- [x] STEP 14-3: SystemStatusBar shimmer 제거
+- [x] STEP 14-4: 서버 기존 nginx conf 확인 (명령어 출력, 사용자가 직접 실행)
+- [ ] STEP 14-5: certbot SSL 발급 — 서버에서 직접 진행 (제외)
+- [ ] STEP 14-6: nginx 443 블록 추가 — 서버에서 직접 진행 (제외)
+- [x] STEP 14-7: git push (프론트 변경분)
+
 ## STEP 13: 자유 문장 입력 지원 (2026-05-16)
 - [x] STEP 13-1: PROGRESS.md 기록
 - [x] STEP 13-2: llm/base.py — JUDGE_SYSTEM 프롬프트 URL/키워드 분기
 - [x] STEP 13-3: llm/claude.py — judge_input 입력 타입 레이블 전달
 - [x] STEP 13-4: main.py — URL 검증 제거, 키워드→URL 등록 흐름
 - [x] STEP 13-5: manage/page.tsx — input type/placeholder, JudgmentCard 추천 URL 표시
-- [ ] STEP 13-6: git push
+- [x] STEP 13-6: git push
 
 ## STEP 12: ESLint 에러 수정 2 (2026-05-16)
 - [x] STEP 12-1: PROGRESS.md 기록

@@ -84,9 +84,7 @@ const OVERALL_CFG = {
 }
 
 function SystemStatusBar({ status }: { status: SysStatus | null }) {
-  if (!status) return (
-    <div className="rounded-2xl border border-zinc-800 p-4 mb-6 shimmer h-16" />
-  )
+  if (!status) return null
   const oc = OVERALL_CFG[status.overall]
 
   return (
@@ -115,7 +113,7 @@ function SystemStatusBar({ status }: { status: SysStatus | null }) {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <StatChip label="활성 인풋" value={`${status.active_count}개`} />
+          <StatChip label="활성 피드" value={`${status.active_count}개`} />
           <StatChip
             label="LLM 잔여"
             value={`${status.llm_remaining}회`}
@@ -221,7 +219,7 @@ function InputCard({
   const sc = STATUS_CFG[input.status]
 
   async function handleDelete() {
-    if (!confirm(`"${input.value}" 인풋을 삭제할까요?`)) return
+    if (!confirm(`"${input.value}" 피드를 삭제할까요?`)) return
     setDeleting(true)
     try {
       await apiFetch(`/api/inputs/${input.id}`, {
@@ -494,7 +492,7 @@ export default function ManagePage() {
         >
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold gradient-text mb-1">crawl-blog</h1>
-            <p className="text-zinc-500 text-sm">인풋 관리 · 비밀번호 필요</p>
+            <p className="text-zinc-500 text-sm">피드 관리 · 비밀번호 필요</p>
           </div>
 
           <div className="gradient-border bg-zinc-900 rounded-2xl p-6 space-y-3">
@@ -532,7 +530,7 @@ export default function ManagePage() {
       <div className="border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <Link href="/" className="text-lg font-bold gradient-text">crawl-blog</Link>
-          <span className="text-sm text-zinc-500 font-medium">인풋 관리</span>
+          <span className="text-sm text-zinc-500 font-medium">피드 관리</span>
         </div>
       </div>
 
@@ -549,7 +547,7 @@ export default function ManagePage() {
         >
           <div className="flex items-center gap-2.5 mb-5">
             <span className="w-1 h-5 rounded-full bg-gradient-to-b from-indigo-400 to-cyan-400" />
-            <h2 className="text-base font-semibold text-zinc-100">인풋 등록</h2>
+            <h2 className="text-base font-semibold text-zinc-100">피드 등록</h2>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -624,7 +622,7 @@ export default function ManagePage() {
             <div className="flex items-center gap-2.5">
               <span className="w-1 h-5 rounded-full bg-gradient-to-b from-indigo-400 to-cyan-400" />
               <h2 className="text-base font-semibold text-zinc-100">
-                인풋 목록
+                피드 목록
                 {inputs.length > 0 && (
                   <span className="ml-2 text-sm font-normal text-zinc-600">{inputs.length}개</span>
                 )}
@@ -644,8 +642,8 @@ export default function ManagePage() {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="text-center py-20"
             >
-              <p className="text-zinc-600 text-base mb-2">등록된 인풋이 없습니다</p>
-              <p className="text-zinc-700 text-sm">위 폼에서 URL을 등록해보세요</p>
+              <p className="text-zinc-600 text-base mb-2">등록된 피드가 없습니다</p>
+              <p className="text-zinc-700 text-sm">위 폼에서 URL 또는 주제를 등록해보세요</p>
             </motion.div>
           ) : (
             <AnimatePresence mode="popLayout">
