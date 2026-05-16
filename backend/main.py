@@ -74,9 +74,10 @@ class InputCreate(BaseModel):
     interval: str = "6h"
 
 
-class IntervalUpdate(BaseModel):
-    interval: str
+class InputUpdate(BaseModel):
     password: str
+    interval: str | None = None
+    name: str | None = None
 
 
 class DeleteRequest(BaseModel):
@@ -103,7 +104,7 @@ async def create_input(body: InputCreate, request: Request):
     target_sites = [u for u in (judgment.get("target_sites") or []) if u.startswith("http")]
 
     if is_url:
-        input_id = await database.create_input(raw, "url", body.interval)
+        input_id = await database.create_input(raw, "url", body.interval, name=judgment.get("name"))
         await database.update_input(
             input_id,
             status="active" if approved else "rejected",
@@ -153,15 +154,21 @@ async def delete_input(input_id: int, body: DeleteRequest, request: Request):
 
 
 @app.patch("/api/inputs/{input_id}")
-async def update_interval(input_id: int, body: IntervalUpdate, request: Request):
+async def update_input(input_id: int, body: InputUpdate, request: Request):
     await auth_request(request, body.password)
-    if body.interval not in ("1h", "6h", "24h"):
-        raise HTTPException(status_code=400, detail="Invalid interval")
     inp = await database.get_input(input_id)
     if not inp:
         raise HTTPException(status_code=404, detail="Input not found")
-    await database.update_input(input_id, crawl_interval=body.interval)
-    if inp["status"] == "active":
+    updates: dict = {}
+    if body.interval is not None:
+        if body.interval not in ("1h", "6h", "24h"):
+            raise HTTPException(status_code=400, detail="Invalid interval")
+        updates["crawl_interval"] = body.interval
+    if body.name is not None:
+        updates["name"] = body.name
+    if updates:
+        await database.update_input(input_id, **updates)
+    if body.interval and inp["status"] == "active":
         sched.schedule_input(input_id, body.interval)
     return {"ok": True}
 

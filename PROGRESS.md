@@ -1,5 +1,13 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 24: 피드 name 컬럼 + 탭 UI 개선 (2026-05-17)
+- [x] STEP 24-1: PROGRESS.md 기록
+- [x] STEP 24-2: database.py — inputs.name 컬럼 추가, create_input name 파라미터
+- [x] STEP 24-3: llm/base.py — JUDGE_SYSTEM name 필드 추가
+- [x] STEP 24-4: main.py — name 추출·저장, PATCH name 지원
+- [x] STEP 24-5: page.tsx — 탭 name 표시, 피드 정보 카드, 피드 목록 탭
+- [x] STEP 24-6: manage/page.tsx — name 표시 + 인라인 편집
+
 ## STEP 23: scheduler async generator / task destroyed 에러 수정 (2026-05-17)
 - [x] STEP 23-1: PROGRESS.md 기록
 - [x] STEP 23-2: crawler.py — async_playwright() async with → start()/stop() 패턴 전환

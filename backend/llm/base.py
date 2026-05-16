@@ -6,18 +6,20 @@ If the input is a URL (starts with http/https):
 - Judge whether it can be crawled (legal, accessible, non-harmful)
 - Choose crawl_method: rss | html | playwright
 - Set target_sites to []
+- Set name to the site/channel display name (e.g. "Hacker News", "Path of Exile 2 Reddit")
 
 If the input is a keyword or topic sentence (not a URL):
 - Find 1-3 real, publicly accessible websites with regularly updated content on that topic
 - Prefer sites that have RSS feeds
 - Set approved to true if you can recommend at least one site
 - List the URLs in target_sites
+- Set name to null
 
 IMPORTANT: Return ONLY a raw JSON object. No markdown, no code blocks, no backticks, no explanation before or after.
 Output must start with { and end with }.
 
 Required JSON format:
-{"approved": true, "reason": "...", "crawl_method": "rss|html|playwright|null", "target_sites": []}"""
+{"approved": true, "reason": "...", "crawl_method": "rss|html|playwright|null", "target_sites": [], "name": "..."}"""
 
 REFINE_SYSTEM = """You are a content curator for a personal knowledge blog.
 Given raw crawled HTML/text content, produce a clean blog post in Korean.

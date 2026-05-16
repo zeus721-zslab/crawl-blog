@@ -9,6 +9,7 @@ type Period = '1h' | '6h' | '24h'
 
 interface CrawlInput {
   id: number
+  name: string | null
   value: string
   type: 'keyword' | 'url'
   status: InputStatus
@@ -206,17 +207,33 @@ function JudgmentCard({ result, onDismiss }: { result: JudgmentResult; onDismiss
 // ── InputCard ──────────────────────────────────────────────────────────────
 
 function InputCard({
-  input, password, onDelete, onIntervalChange, onCrawl,
+  input, password, onDelete, onIntervalChange, onCrawl, onNameChange,
 }: {
   input: CrawlInput
   password: string
   onDelete: (id: number) => void
   onIntervalChange: (id: number, p: Period) => void
   onCrawl: (id: number) => void
+  onNameChange: (id: number, name: string) => void
 }) {
-  const [deleting, setDeleting] = useState(false)
-  const [crawling, setCrawling] = useState(false)
+  const [deleting,  setDeleting]  = useState(false)
+  const [crawling,  setCrawling]  = useState(false)
+  const [nameVal,   setNameVal]   = useState(input.name ?? '')
+  const [nameSaving, setNameSaving] = useState(false)
+  const nameDirty = nameVal !== (input.name ?? '')
   const sc = STATUS_CFG[input.status]
+
+  async function handleSaveName() {
+    setNameSaving(true)
+    try {
+      await apiFetch(`/api/inputs/${input.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: nameVal, password }),
+      })
+      onNameChange(input.id, nameVal)
+    } catch (e: unknown) { alert((e as Error).message) }
+    finally { setNameSaving(false) }
+  }
 
   async function handleDelete() {
     if (!confirm(`"${input.value}" 피드를 삭제할까요?`)) return
@@ -288,7 +305,10 @@ function InputCard({
             )}
           </div>
 
-          <p className="text-base font-medium text-zinc-100 break-all leading-snug">{input.value}</p>
+          {input.name && (
+            <p className="text-base font-semibold text-zinc-100 leading-snug">{input.name}</p>
+          )}
+          <p className="text-sm text-zinc-500 break-all leading-snug font-mono">{input.value}</p>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
@@ -350,6 +370,34 @@ function InputCard({
         {input.next_crawl_at && (
           <StatPill icon="⏰" value={fmtTime(input.next_crawl_at)} label="다음" />
         )}
+      </div>
+
+      {/* ── Name edit ── */}
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={nameVal}
+          onChange={e => setNameVal(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && nameDirty && handleSaveName()}
+          placeholder="표시 이름 (선택)"
+          className="flex-1 text-sm bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5 text-zinc-300 placeholder-zinc-700 focus:border-zinc-600 outline-none transition-colors"
+        />
+        <AnimatePresence>
+          {nameDirty && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.12 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSaveName}
+              disabled={nameSaving}
+              className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-600/30 transition-colors disabled:opacity-40 shrink-0"
+            >
+              {nameSaving ? '저장 중' : '저장'}
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Interval picker ── */}
@@ -466,6 +514,9 @@ export default function ManagePage() {
   function handleDelete(id: number) { setInputs(prev => prev.filter(i => i.id !== id)) }
   function handlePeriodChange(id: number, p: Period) {
     setInputs(prev => prev.map(i => i.id === id ? { ...i, crawl_interval: p } : i))
+  }
+  function handleNameChange(id: number, name: string) {
+    setInputs(prev => prev.map(i => i.id === id ? { ...i, name: name || null } : i))
   }
   function handleCrawl(id: number) {
     setInputs(prev => prev.map(i => i.id === id ? { ...i, status: 'crawling' as InputStatus } : i))
@@ -660,6 +711,7 @@ export default function ManagePage() {
                     onDelete={handleDelete}
                     onIntervalChange={handlePeriodChange}
                     onCrawl={handleCrawl}
+                    onNameChange={handleNameChange}
                   />
                 </motion.div>
               ))}
