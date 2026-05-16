@@ -32,11 +32,12 @@ interface SysStatus {
 }
 
 interface JudgmentResult {
-  id: number
   value: string
   approved: boolean
   reason: string
   crawl_method: string | null
+  target_sites: string[]
+  created_count: number
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -164,7 +165,7 @@ function JudgmentCard({ result, onDismiss }: { result: JudgmentResult; onDismiss
       }`}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1.5">
+        <div className="space-y-2 flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className={`text-sm font-semibold ${result.approved ? 'text-emerald-400' : 'text-red-400'}`}>
               {result.approved ? '✓ 승인' : '✗ 거절'}
@@ -174,10 +175,23 @@ function JudgmentCard({ result, onDismiss }: { result: JudgmentResult; onDismiss
                 {result.crawl_method}
               </span>
             )}
+            {result.approved && result.created_count > 0 && (
+              <span className="text-xs text-zinc-500">{result.created_count}개 등록됨</span>
+            )}
           </div>
           <p className={`text-sm leading-relaxed ${result.approved ? 'text-emerald-300/80' : 'text-red-300/80'}`}>
             {result.reason}
           </p>
+          {result.target_sites.length > 0 && (
+            <div className="pt-1 space-y-1">
+              {result.target_sites.map(url => (
+                <div key={url} className="flex items-center gap-1.5 text-xs text-zinc-400 font-mono truncate">
+                  <span className="text-indigo-500 shrink-0">↗</span>
+                  <span className="truncate">{url}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <motion.button
           whileTap={{ scale: 0.9 }}
@@ -419,16 +433,21 @@ export default function ManagePage() {
     setSubmitting(true)
 
     try {
-      const res = await apiFetch<{ id: number; approved: boolean; judgment: { reason: string; crawl_method: string | null } }>('/api/inputs', {
+      const res = await apiFetch<{
+        approved: boolean
+        judgment: { reason: string; crawl_method: string | null; target_sites?: string[] }
+        created_count: number
+      }>('/api/inputs', {
         method: 'POST',
         body: JSON.stringify({ value: trimmed, password, interval: period }),
       })
       setLastResult({
-        id: res.id,
         value: trimmed,
         approved: res.approved,
         reason: res.judgment.reason,
         crawl_method: res.judgment.crawl_method,
+        target_sites: res.judgment.target_sites ?? [],
+        created_count: res.created_count,
       })
       setValue('')
       await loadInputs()
@@ -535,10 +554,10 @@ export default function ManagePage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
-              type="url"
+              type="text"
               value={value}
               onChange={e => setValue(e.target.value)}
-              placeholder="https://example.com/feed.xml"
+              placeholder="URL 또는 주제를 자유롭게 입력하세요"
               disabled={submitting}
               className="input-glow w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-base text-zinc-100 placeholder-zinc-600 disabled:opacity-50"
             />

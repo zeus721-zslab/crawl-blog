@@ -16,11 +16,13 @@ class ClaudeProvider(LLMProvider):
         self._client = anthropic.AsyncAnthropic(api_key=api_key)
 
     async def judge_input(self, value: str) -> dict:
+        is_url = value.startswith("http://") or value.startswith("https://")
+        label = "URL" if is_url else "keyword/topic"
         msg = await self._client.messages.create(
             model=JUDGE_MODEL,
-            max_tokens=512,
+            max_tokens=768,
             system=JUDGE_SYSTEM,
-            messages=[{"role": "user", "content": f"URL: {value}"}],
+            messages=[{"role": "user", "content": f"{label}: {value}"}],
         )
         return json.loads(msg.content[0].text)
 

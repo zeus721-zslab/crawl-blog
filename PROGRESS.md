@@ -1,10 +1,18 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 13: 자유 문장 입력 지원 (2026-05-16)
+- [x] STEP 13-1: PROGRESS.md 기록
+- [x] STEP 13-2: llm/base.py — JUDGE_SYSTEM 프롬프트 URL/키워드 분기
+- [x] STEP 13-3: llm/claude.py — judge_input 입력 타입 레이블 전달
+- [x] STEP 13-4: main.py — URL 검증 제거, 키워드→URL 등록 흐름
+- [x] STEP 13-5: manage/page.tsx — input type/placeholder, JudgmentCard 추천 URL 표시
+- [ ] STEP 13-6: git push
+
 ## STEP 12: ESLint 에러 수정 2 (2026-05-16)
 - [x] STEP 12-1: PROGRESS.md 기록
-- [ ] STEP 12-2: posts/[id]/page.tsx — <a> → <Link /> 교체
-- [ ] STEP 12-3: page.tsx — " → &quot; 교체
-- [ ] STEP 12-4: git push
+- [x] STEP 12-2: posts/[id]/page.tsx — <a> → <Link /> 교체
+- [x] STEP 12-3: page.tsx — " → &quot; 교체
+- [x] STEP 12-4: git push
 
 ## STEP 11: ESLint 에러 수정 (2026-05-16)
 - [x] STEP 11-1: PROGRESS.md 기록

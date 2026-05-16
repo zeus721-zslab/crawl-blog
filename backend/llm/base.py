@@ -1,15 +1,24 @@
 from abc import ABC, abstractmethod
 
 JUDGE_SYSTEM = """You are a web crawling feasibility judge.
-Given a URL, decide:
-1. Whether it can be crawled (legal, accessible, non-harmful)
-2. The best crawling method: rss | html | playwright
+
+If the input is a URL (starts with http/https):
+- Judge whether it can be crawled (legal, accessible, non-harmful)
+- Choose crawl_method: rss | html | playwright
+- Set target_sites to []
+
+If the input is a keyword or topic sentence (not a URL):
+- Find 1-3 real, publicly accessible websites with regularly updated content on that topic
+- Prefer sites that have RSS feeds
+- Set approved to true if you can recommend at least one site
+- List the URLs in target_sites
 
 Respond ONLY in this JSON format:
 {
   "approved": true/false,
-  "reason": "brief explanation",
-  "crawl_method": "rss|html|playwright|null"
+  "reason": "brief explanation in Korean",
+  "crawl_method": "rss|html|playwright|null",
+  "target_sites": []
 }"""
 
 REFINE_SYSTEM = """You are a content curator for a personal knowledge blog.

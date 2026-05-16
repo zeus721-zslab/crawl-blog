@@ -91,28 +91,47 @@ class CrawlTrigger(BaseModel):
 async def create_input(body: InputCreate, request: Request):
     await auth_request(request, body.password)
 
-    url = body.value.strip()
-    if not url.startswith("http://") and not url.startswith("https://"):
-        raise HTTPException(status_code=400, detail="URL must start with http:// or https://")
+    raw = body.value.strip()
+    if not raw:
+        raise HTTPException(status_code=400, detail="입력값이 비어있습니다")
 
-    input_id = await database.create_input(url, "url", body.interval)
-
-    judgment = await get_llm().judge_input(url)
+    is_url = raw.startswith("http://") or raw.startswith("https://")
+    judgment = await get_llm().judge_input(raw)
     approved = judgment.get("approved", False)
-    status = "active" if approved else "rejected"
+    target_sites = [u for u in (judgment.get("target_sites") or []) if u.startswith("http")]
 
-    await database.update_input(
-        input_id,
-        status=status,
-        claude_approved=1 if approved else 0,
-        claude_reason=judgment.get("reason"),
-        crawl_method=judgment.get("crawl_method"),
-    )
+    if is_url:
+        input_id = await database.create_input(raw, "url", body.interval)
+        await database.update_input(
+            input_id,
+            status="active" if approved else "rejected",
+            claude_approved=1 if approved else 0,
+            claude_reason=judgment.get("reason"),
+            crawl_method=judgment.get("crawl_method"),
+        )
+        if approved:
+            sched.schedule_input(input_id, body.interval)
+        return {"approved": approved, "judgment": judgment, "created_count": 1 if approved else 0}
 
-    if approved:
-        sched.schedule_input(input_id, body.interval)
+    # keyword / topic → register each recommended URL
+    if not approved or not target_sites:
+        return {"approved": False, "judgment": judgment, "created_count": 0}
 
-    return {"id": input_id, "approved": approved, "judgment": judgment}
+    crawl_method = judgment.get("crawl_method", "html")
+    created_count = 0
+    for url in target_sites[:3]:
+        iid = await database.create_input(url, "url", body.interval)
+        await database.update_input(
+            iid,
+            status="active",
+            claude_approved=1,
+            claude_reason=f"추천 (검색어: {raw[:60]})",
+            crawl_method=crawl_method,
+        )
+        sched.schedule_input(iid, body.interval)
+        created_count += 1
+
+    return {"approved": True, "judgment": judgment, "created_count": created_count}
 
 
 @app.get("/api/inputs")
