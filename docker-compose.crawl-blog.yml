@@ -1,0 +1,44 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: ghcr.io/${GITHUB_REPOSITORY}/frontend:${IMAGE_TAG:-latest}
+    container_name: crawl-blog-frontend
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    networks:
+      - crawl-blog-net
+      - zslab_zslab_net
+      - gateway_net
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ghcr.io/${GITHUB_REPOSITORY}/backend:${IMAGE_TAG:-latest}
+    container_name: crawl-blog-backend
+    restart: unless-stopped
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PASSWORD_HASH=${PASSWORD_HASH}
+      - CLAUDE_DAILY_LIMIT=${CLAUDE_DAILY_LIMIT:-100}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - DOMAIN_BLACKLIST=${DOMAIN_BLACKLIST:-}
+    volumes:
+      - crawl-blog-data:/app/data
+    networks:
+      - crawl-blog-net
+
+volumes:
+  crawl-blog-data:
+
+networks:
+  crawl-blog-net:
+  zslab_zslab_net:
+    external: true
+  gateway_net:
+    external: true

@@ -1,0 +1,39 @@
+# === 환경변수 (민감정보) ===
+.env
+.env.*
+!.env.example
+
+# === Python ===
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.venv/
+*.egg-info/
+
+# === Node.js (frontend/.gitignore 이중 보호) ===
+frontend/node_modules/
+frontend/.next/
+frontend/.turbo/
+frontend/out/
+
+# === DB / 데이터 ===
+backend/data/
+*.db
+*.sqlite
+
+# === 로그 ===
+*.log
+logs/
+
+# === IDE / 도구 ===
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+
+# === OS ===
+.DS_Store
+Thumbs.db
+ehthumbs.db
