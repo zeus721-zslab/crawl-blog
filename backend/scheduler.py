@@ -52,7 +52,10 @@ async def crawl_input(input_id: int) -> None:
                 if refined_count >= MAX_REFINE_PER_RUN:
                     break
                 src = entry["url"]
-                if not src or await database.source_url_exists(src):
+                if not src:
+                    continue
+                if await database.source_url_exists(src):
+                    log.info("skip: already exists %s", src)
                     continue
                 if not rate.check_and_increment():
                     log.warning("Daily refine limit reached, stopping crawl for input %d", input_id)
@@ -60,12 +63,13 @@ async def crawl_input(input_id: int) -> None:
                 # Try fetching full article body; fall back to RSS summary on error
                 try:
                     raw = await crawler.fetch_page(src, method="html")
-                except Exception:
+                except Exception as exc:
+                    log.warning("RSS body fetch failed (%s), falling back to summary: %s", exc, src)
                     raw = entry["summary"] or entry["title"]
                 try:
                     refined = await get_llm().refine_content(raw, src, feed_name=feed_name, keyword=keyword)
                     if refined.get("skip"):
-                        log.debug("Skipped unsuitable content: %s", src)
+                        log.info("skip: filtered by LLM %s", src)
                         continue
                     await database.create_post(
                         input_id=input_id,
@@ -84,7 +88,11 @@ async def crawl_input(input_id: int) -> None:
             article_links = await crawler.fetch_links(url)
             if not article_links:
                 # Fallback: no links found, treat page itself as single article
-                if not await database.source_url_exists(url) and rate.check_and_increment():
+                if await database.source_url_exists(url):
+                    log.info("skip: already exists %s", url)
+                elif not rate.check_and_increment():
+                    log.warning("Daily refine limit reached, stopping crawl for input %d", input_id)
+                else:
                     try:
                         raw = await crawler.fetch_page(url, method=method)
                         refined = await get_llm().refine_content(raw, url, feed_name=feed_name, keyword=keyword)
@@ -98,17 +106,16 @@ async def crawl_input(input_id: int) -> None:
                                 source_url=url,
                             )
                             refined_count += 1
+                        else:
+                            log.info("skip: filtered by LLM %s", url)
                     except Exception:
                         log.exception("Refine failed for %s", url)
-                elif await database.source_url_exists(url):
-                    log.debug("source_url already collected, skipping: %s", url)
-                else:
-                    log.warning("Daily refine limit reached, stopping crawl for input %d", input_id)
             else:
                 for article_url in article_links:
                     if refined_count >= MAX_REFINE_PER_RUN:
                         break
                     if await database.source_url_exists(article_url):
+                        log.info("skip: already exists %s", article_url)
                         continue
                     if not rate.check_and_increment():
                         log.warning("Daily refine limit reached, stopping crawl for input %d", input_id)
@@ -117,7 +124,7 @@ async def crawl_input(input_id: int) -> None:
                         raw = await crawler.fetch_page(article_url, method=method)
                         refined = await get_llm().refine_content(raw, article_url, feed_name=feed_name, keyword=keyword)
                         if refined.get("skip"):
-                            log.debug("Skipped unsuitable content: %s", article_url)
+                            log.info("skip: filtered by LLM %s", article_url)
                             continue
                         await database.create_post(
                             input_id=input_id,
@@ -138,7 +145,10 @@ async def crawl_input(input_id: int) -> None:
             last_crawl_at=datetime.utcnow().isoformat(),
             next_crawl_at=(datetime.utcnow() + timedelta(hours=hours)).isoformat(),
         )
-        log.info("Crawl done for input %d: %d items refined", input_id, refined_count)
+        if refined_count > 0:
+            log.info("Crawl done for input %d: %d items saved", input_id, refined_count)
+        else:
+            log.info("Crawl done for input %d: no new items (skipped or filtered)", input_id)
 
     except Exception:
         log.exception("Crawl failed for input %d", input_id)

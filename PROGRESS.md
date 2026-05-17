@@ -1,5 +1,10 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 26: scheduler.py 로깅 개선 (2026-05-17)
+- [x] STEP 26-1: PROGRESS.md 기록
+- [x] STEP 26-2: scheduler.py 로그 레벨 및 메시지 수정
+- [ ] STEP 26-3: git push
+
 ## STEP 25: 퀄리티 개선 4가지 (2026-05-17)
 - [x] STEP 25-1: PROGRESS.md 기록
 - [x] STEP 25-2: database.py — keyword 컬럼 추가, create_input keyword 파라미터
