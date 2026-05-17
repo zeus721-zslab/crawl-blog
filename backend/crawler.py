@@ -1,4 +1,5 @@
 import logging
+import re
 from urllib.parse import urlparse
 
 import feedparser
@@ -8,6 +9,43 @@ from bs4 import BeautifulSoup
 from settings import settings
 
 log = logging.getLogger(__name__)
+
+# Path segments that indicate navigation/taxonomy pages (not articles)
+_NAV_SEGMENTS = frozenset({
+    "category", "categories", "cat", "tag", "tags", "author", "authors",
+    "topic", "topics", "section", "sections", "archive", "archives",
+    "event", "events", "podcast", "podcasts", "newsletter", "newsletters",
+    "about", "contact", "search", "p", "feed", "rss", "sitemap",
+    "wp-content", "wp-admin", "wp-json", "wp-includes",
+    "login", "logout", "signup", "register", "account", "profile", "settings",
+    "privacy", "terms", "tos", "advertise", "press", "jobs", "careers",
+    "photo", "photos", "gallery", "galleries",
+    "series", "collection", "collections", "subscribe", "subscription",
+})
+
+_DATE_RE = re.compile(r"/20\d{2}/")
+_MEDIA_EXT_RE = re.compile(r"\.(jpg|jpeg|png|gif|svg|webp|pdf|zip|mp3|mp4|css|js)$", re.IGNORECASE)
+
+
+def _is_likely_article(path: str) -> bool:
+    """Return True if the URL path looks like a real article rather than a nav/listing page."""
+    segments = [s for s in path.split("/") if s]
+    if not segments:
+        return False
+    if _MEDIA_EXT_RE.search(path):
+        return False
+    # Skip if the first segment is a known nav/taxonomy keyword
+    if segments[0].lower() in _NAV_SEGMENTS:
+        return False
+    # Date pattern in path → very likely an article (e.g. /2025/05/17/slug/)
+    if _DATE_RE.search(path):
+        return True
+    # Two or more segments with a non-nav first segment → section/article structure
+    if len(segments) >= 2:
+        return True
+    # Single-segment paths: accept only if slug is long (suggests article title, not category name)
+    return len(segments[0]) > 15
+
 
 _HEADERS = {
     "User-Agent": (
@@ -94,6 +132,8 @@ def _extract_article_links(html: str, base_url: str) -> list[str]:
             continue
         path = parsed.path.rstrip("/")
         if not path or path == base_path:
+            continue
+        if not _is_likely_article(path):
             continue
         clean = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
         if clean in seen:
