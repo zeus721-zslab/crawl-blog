@@ -1,5 +1,10 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 37: MD 파일 업데이트 (2026-05-17)
+- [x] STEP 37-1: PROGRESS.md 기록
+- [x] STEP 37-2: README.md — 기술 스택/기능/API/구조 최신화
+- [x] STEP 37-3: CRAWL-BLOG.md — 아키텍처/상태/provider 최신화
+
 ## STEP 36: 탭 UI + 애니메이션 전면 개선 (2026-05-17)
 - [x] STEP 36-1: PROGRESS.md 기록
 - [x] STEP 36-2: scheduler.py — 0건 시 error_message, 성공 시 None
