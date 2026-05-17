@@ -38,6 +38,10 @@ def _create() -> LLMProvider:
         from llm.ollama import OllamaProvider
         return OllamaProvider(base_url=settings.ollama_base_url)
 
+    if provider == "mock":
+        from llm.mock import MockProvider
+        return MockProvider()
+
     raise ValueError(
-        f"Unknown LLM_PROVIDER={provider!r}. Choose from: claude, gemini, groq, ollama"
+        f"Unknown LLM_PROVIDER={provider!r}. Choose from: claude, gemini, groq, ollama, mock"
     )
