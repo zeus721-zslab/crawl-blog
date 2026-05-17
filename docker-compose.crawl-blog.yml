@@ -10,7 +10,6 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     networks:
       - crawl-blog-net
-      - zslab_zslab_net
       - gateway_net
     depends_on:
       - backend
