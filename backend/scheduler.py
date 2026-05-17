@@ -48,6 +48,11 @@ async def crawl_input(input_id: int) -> None:
         method = inp["crawl_method"] or "html"
         url = inp["value"]
 
+        # Auto-detect feed URLs: crawl_method may be NULL or "html" if set before feed was identified
+        if method != "rss" and any(s in url.lower() for s in ("/feed", "/rss", "/atom", ".rss", ".atom", "feed.xml")):
+            log.info("Feed URL detected for input %d, switching to rss method", input_id)
+            method = "rss"
+
         if method == "rss":
             entries = await crawler.fetch_rss(url)
             for entry in entries:
