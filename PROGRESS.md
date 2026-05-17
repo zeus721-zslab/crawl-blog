@@ -1,9 +1,14 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 27: 백그라운드 태스크 로깅 전면 개선 (2026-05-17)
+- [x] STEP 27-1: PROGRESS.md 기록
+- [x] STEP 27-2: scheduler.py — crawl_input 전체 try/except 감싸기 + start/abort 로그
+- [x] STEP 27-3: main.py — logging 추가, _bg_task_done 콜백 추가
+
 ## STEP 26: scheduler.py 로깅 개선 (2026-05-17)
 - [x] STEP 26-1: PROGRESS.md 기록
 - [x] STEP 26-2: scheduler.py 로그 레벨 및 메시지 수정
-- [ ] STEP 26-3: git push
+- [x] STEP 26-3: git push
 
 ## STEP 25: 퀄리티 개선 4가지 (2026-05-17)
 - [x] STEP 25-1: PROGRESS.md 기록

@@ -33,16 +33,18 @@ scheduler = AsyncIOScheduler(jobstores=_jobstores, job_defaults=_job_defaults)
 
 
 async def crawl_input(input_id: int) -> None:
-    inp = await database.get_input(input_id)
-    if not inp or inp["status"] == "deleted":
-        return
-
-    await database.update_input(input_id, status="crawling")
-    refined_count = 0
-    feed_name: str | None = inp.get("name")
-    keyword: str | None = inp.get("keyword")
-
+    log.info("Crawl start: input %d", input_id)
     try:
+        inp = await database.get_input(input_id)
+        if not inp or inp["status"] == "deleted":
+            log.info("Crawl abort: input %d not found or deleted", input_id)
+            return
+
+        await database.update_input(input_id, status="crawling")
+        refined_count = 0
+        feed_name: str | None = inp.get("name")
+        keyword: str | None = inp.get("keyword")
+
         method = inp["crawl_method"] or "html"
         url = inp["value"]
 
@@ -152,7 +154,10 @@ async def crawl_input(input_id: int) -> None:
 
     except Exception:
         log.exception("Crawl failed for input %d", input_id)
-        await database.update_input(input_id, status="failed")
+        try:
+            await database.update_input(input_id, status="failed")
+        except Exception:
+            log.exception("Failed to set status=failed for input %d", input_id)
 
 
 def schedule_input(input_id: int, interval: str) -> None:

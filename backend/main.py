@@ -1,5 +1,6 @@
 import asyncio
 import bcrypt
+import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
@@ -28,7 +29,19 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="crawl-blog API", lifespan=lifespan)
 
+log = logging.getLogger(__name__)
+
 _bg_tasks: set[asyncio.Task] = set()
+
+
+def _bg_task_done(task: asyncio.Task) -> None:
+    _bg_tasks.discard(task)
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc:
+        log.exception("Unhandled exception in background task '%s'", task.get_name(), exc_info=exc)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -237,5 +250,5 @@ async def trigger_crawl(input_id: int, body: CrawlTrigger, request: Request):
         raise HTTPException(status_code=409, detail="Already crawling")
     task = asyncio.create_task(sched.crawl_input(input_id))
     _bg_tasks.add(task)
-    task.add_done_callback(_bg_tasks.discard)
+    task.add_done_callback(_bg_task_done)
     return {"ok": True}
