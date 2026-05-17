@@ -14,6 +14,14 @@ import rate
 from llm.factory import get_llm
 from settings import settings
 
+# uvicorn's LOGGING_CONFIG only configures uvicorn.* loggers and leaves the root
+# logger with no handlers (level=WARNING).  basicConfig here adds a StreamHandler
+# to root at INFO so that scheduler/crawler/llm module loggers propagate correctly.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s [%(name)s] %(message)s",
+)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
