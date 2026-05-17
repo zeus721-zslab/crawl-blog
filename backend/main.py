@@ -4,6 +4,7 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
+import httpx
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -58,6 +59,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# --- url reachability check ---
+
+async def check_url_reachable(url: str) -> bool:
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=5.0) as client:
+            r = await client.head(url)
+            # 404/410: resource confirmed gone
+            if r.status_code in (404, 410):
+                return False
+            # 405 Method Not Allowed → server exists but doesn't support HEAD
+            if r.status_code == 405:
+                r = await client.get(url)
+                if r.status_code in (404, 410):
+                    return False
+            return True
+    except (httpx.ConnectError, httpx.TimeoutException, httpx.ConnectTimeout):
+        return False
+    except Exception:
+        return True  # unknown errors: assume reachable
 
 
 # --- auth helpers ---
@@ -121,6 +143,10 @@ async def create_input(body: InputCreate, request: Request):
         raise HTTPException(status_code=400, detail="입력값이 비어있습니다")
 
     is_url = raw.startswith("http://") or raw.startswith("https://")
+
+    if is_url and not await check_url_reachable(raw):
+        raise HTTPException(status_code=400, detail="URL에 접근할 수 없습니다 (DNS 오류, 타임아웃, 또는 404/410)")
+
     judgment = await get_llm().judge_input(raw)
     approved = judgment.get("approved", False)
     target_sites = [u for u in (judgment.get("target_sites") or []) if u.startswith("http")]
@@ -144,7 +170,8 @@ async def create_input(body: InputCreate, request: Request):
 
     crawl_method = judgment.get("crawl_method", "html")
     created_count = 0
-    for url in target_sites[:3]:
+    reachable_sites = [u for u in target_sites[:3] if await check_url_reachable(u)]
+    for url in reachable_sites:
         iid = await database.create_input(url, "url", body.interval, keyword=raw)
         await database.update_input(
             iid,

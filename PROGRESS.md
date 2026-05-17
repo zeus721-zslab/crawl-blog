@@ -1,5 +1,18 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 39: judge_input URL 실존 검증 추가 (2026-05-17)
+- [x] STEP 39-1: PROGRESS.md 기록
+- [x] STEP 39-2: main.py — check_url_reachable() 함수 추가
+- [x] STEP 39-3: main.py — URL 직접 입력 시 LLM 호출 전 URL 검증
+- [x] STEP 39-4: main.py — 키워드 입력 시 target_sites 각 URL 검증 후 skip
+
+## STEP 38: UI 버그 수정 + 피드 관리 개선 (2026-05-17)
+- [x] STEP 38-1: PROGRESS.md 기록
+- [x] STEP 38-2: backend — judge_input name 저장 확인 (변경 불필요 확인)
+- [x] STEP 38-3: manage/page.tsx — error_message 표시 조건 수정 (status=failed || error_message)
+- [x] STEP 38-4: page.tsx — ⚠ 아이콘 및 관련 로직 완전 제거
+- [x] STEP 38-5: page.tsx — 탭 overflow 드롭다운 구현 (5개 초과 시 PC 드롭다운, 모바일 스크롤 유지)
+
 ## STEP 37: MD 파일 업데이트 (2026-05-17)
 - [x] STEP 37-1: PROGRESS.md 기록
 - [x] STEP 37-2: README.md — 기술 스택/기능/API/구조 최신화
