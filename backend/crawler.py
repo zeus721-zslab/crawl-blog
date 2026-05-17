@@ -154,10 +154,10 @@ async def fetch_links(url: str) -> list[str]:
             resp.raise_for_status()
             links = _extract_article_links(resp.text, url)
         log.info("fetch_links: extracted %d links (simple) from %s", len(links), url)
-        if len(links) >= 3:
+        if len(links) > 5:
             return links
         # Too few links — page likely requires JS rendering
-        log.info("fetch_links: < 3 links, retrying with Playwright for %s", url)
+        log.info("fetch_links: <= 5 links, retrying with Playwright for %s", url)
         html = await _fetch_html_playwright(url)
         links = _extract_article_links(html, url)
         log.info("fetch_links: extracted %d links (playwright) from %s", len(links), url)
