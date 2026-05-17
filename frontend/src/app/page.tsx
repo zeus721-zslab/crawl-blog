@@ -324,11 +324,26 @@ export default function HomePage() {
   const [search,      setSearch]      = useState('')
   const [activeTab,   setActiveTab]   = useState<ActiveTab>(null)
 
-  const searchRef = useRef<HTMLInputElement>(null)
+  const searchRef    = useRef<HTMLInputElement>(null)
+  const dropdownRef  = useRef<HTMLDivElement>(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  const VISIBLE_LIMIT = 3
 
   useEffect(() => {
     apiFetch<CrawlInput[]>('/api/inputs').then(setInputs).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (!dropdownOpen) return
+    function onClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [dropdownOpen])
 
   const fetchPosts = useCallback(async (p: number, q: string, inputId: number | null) => {
     const params = new URLSearchParams({ page: String(p), per_page: String(PER_PAGE) })
@@ -429,43 +444,98 @@ export default function HomePage() {
         </div>
 
         {/* ── tabs ── */}
-        {inputs.length > 0 && (
-          <div className="max-w-3xl mx-auto px-4 pb-3 flex gap-0.5 overflow-x-auto scrollbar-none">
-            <TabBtn active={activeTab === null} onClick={() => setActiveTab(null)}>
-              전체
-              {total > 0 && activeTab === null && (
-                <span className="text-xs text-zinc-500 ml-0.5">{total}</span>
-              )}
-            </TabBtn>
+        {inputs.length > 0 && (() => {
+          const needsOverflow = inputs.length > VISIBLE_LIMIT
+          const visibleInputs  = needsOverflow ? inputs.slice(0, VISIBLE_LIMIT) : inputs
+          const overflowInputs = needsOverflow ? inputs.slice(VISIBLE_LIMIT) : []
+          const activeInOverflow = overflowInputs.some(i => i.id === activeTab)
 
-            {inputs.map(inp => {
-              const showWarn =
-                (inp.status === 'active' && inp.post_count === 0) ||
-                inp.status === 'failed'
-              const warnTitle =
-                inp.status === 'failed'
-                  ? (inp.error_message ?? '크롤링 실패')
-                  : '수집된 글 없음'
-              const warnCls = inp.status === 'failed' ? 'text-red-400' : 'text-amber-400'
+          function renderInputTab(inp: CrawlInput) {
+            return (
+              <TabBtn key={inp.id} active={activeTab === inp.id} onClick={() => setActiveTab(inp.id)}>
+                <span className="max-w-[96px] truncate">{inp.name ?? inp.value}</span>
+                {inp.post_count > 0 && (
+                  <span className="text-xs text-zinc-600">{inp.post_count}</span>
+                )}
+              </TabBtn>
+            )
+          }
 
-              return (
-                <TabBtn key={inp.id} active={activeTab === inp.id} onClick={() => setActiveTab(inp.id)}>
-                  {showWarn && (
-                    <span title={warnTitle} className={`text-xs leading-none ${warnCls}`}>⚠</span>
-                  )}
-                  <span className="max-w-[96px] truncate">{inp.name ?? inp.value}</span>
-                  {inp.post_count > 0 && (
-                    <span className="text-xs text-zinc-600">{inp.post_count}</span>
+          return (
+            <div className="max-w-3xl mx-auto px-4 pb-3">
+              {/* Mobile: horizontal scroll */}
+              <div className="flex gap-0.5 overflow-x-auto scrollbar-none md:hidden">
+                <TabBtn active={activeTab === null} onClick={() => setActiveTab(null)}>
+                  전체
+                  {total > 0 && activeTab === null && (
+                    <span className="text-xs text-zinc-500 ml-0.5">{total}</span>
                   )}
                 </TabBtn>
-              )
-            })}
+                {inputs.map(renderInputTab)}
+                <TabBtn active={activeTab === 'feeds'} onClick={() => setActiveTab('feeds')}>
+                  피드 목록
+                </TabBtn>
+              </div>
 
-            <TabBtn active={activeTab === 'feeds'} onClick={() => setActiveTab('feeds')}>
-              피드 목록
-            </TabBtn>
-          </div>
-        )}
+              {/* Desktop: fixed row with dropdown overflow */}
+              <div className="hidden md:flex gap-0.5 items-center">
+                <TabBtn active={activeTab === null} onClick={() => setActiveTab(null)}>
+                  전체
+                  {total > 0 && activeTab === null && (
+                    <span className="text-xs text-zinc-500 ml-0.5">{total}</span>
+                  )}
+                </TabBtn>
+                {visibleInputs.map(renderInputTab)}
+                {needsOverflow && (
+                  <div ref={dropdownRef} className="relative">
+                    <motion.button
+                      whileTap={{ scale: 0.94 }}
+                      onClick={() => setDropdownOpen(v => !v)}
+                      className={`relative text-sm px-3 py-1.5 rounded-lg shrink-0 flex items-center gap-1 transition-colors ${
+                        activeInOverflow || dropdownOpen
+                          ? 'text-zinc-100 font-medium bg-zinc-800'
+                          : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      + {overflowInputs.length}개 ▼
+                    </motion.button>
+                    <AnimatePresence>
+                      {dropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -4, scale: 0.97, transition: { duration: 0.12 } }}
+                          transition={{ duration: 0.14 }}
+                          className="absolute top-full left-0 mt-1 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl z-50 py-1 min-w-[160px]"
+                        >
+                          {overflowInputs.map(inp => (
+                            <button
+                              key={inp.id}
+                              onClick={() => { setActiveTab(inp.id); setDropdownOpen(false) }}
+                              className={`w-full text-left text-sm px-3 py-2 flex items-center gap-1.5 transition-colors first:rounded-t-xl last:rounded-b-xl ${
+                                activeTab === inp.id
+                                  ? 'text-zinc-100 bg-zinc-800'
+                                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                              }`}
+                            >
+                              <span className="truncate flex-1">{inp.name ?? inp.value}</span>
+                              {inp.post_count > 0 && (
+                                <span className="text-xs text-zinc-600 shrink-0">{inp.post_count}</span>
+                              )}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+                <TabBtn active={activeTab === 'feeds'} onClick={() => setActiveTab('feeds')}>
+                  피드 목록
+                </TabBtn>
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* ── content — key 변경 시 fade-in 전환 ── */}

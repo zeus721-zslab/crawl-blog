@@ -413,9 +413,15 @@ function InputCard({
       </AnimatePresence>
 
       {/* ── Error message ── */}
-      {input.status === 'failed' && input.error_message && (
-        <div className="text-xs text-red-400 leading-relaxed bg-red-950/30 border border-red-900/30 rounded-xl px-3.5 py-2.5">
-          <span className="font-semibold mr-1.5 opacity-70">에러</span>
+      {!!input.error_message && (
+        <div className={`text-xs leading-relaxed rounded-xl px-3.5 py-2.5 ${
+          input.status === 'failed'
+            ? 'text-red-400 bg-red-950/30 border border-red-900/30'
+            : 'text-amber-400 bg-amber-950/30 border border-amber-900/30'
+        }`}>
+          <span className="font-semibold mr-1.5 opacity-70">
+            {input.status === 'failed' ? '에러' : '경고'}
+          </span>
           {input.error_message}
         </div>
       )}
