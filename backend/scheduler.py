@@ -154,7 +154,7 @@ async def crawl_input(input_id: int, force: bool = False) -> None:
             status="active",
             last_crawl_at=datetime.utcnow().isoformat(),
             next_crawl_at=(datetime.utcnow() + timedelta(hours=hours)).isoformat(),
-            error_message=None,
+            error_message=None if refined_count > 0 else "수집 가능한 콘텐츠를 찾지 못했습니다",
         )
         if refined_count > 0:
             log.info("Crawl done for input %d: %d items saved", input_id, refined_count)

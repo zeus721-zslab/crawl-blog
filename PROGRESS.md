@@ -1,5 +1,14 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 36: 탭 UI + 애니메이션 전면 개선 (2026-05-17)
+- [x] STEP 36-1: PROGRESS.md 기록
+- [x] STEP 36-2: scheduler.py — 0건 시 error_message, 성공 시 None
+- [x] STEP 36-3: page.tsx — STATUS paused 추가, TabBtn layoutId 슬라이딩 인디케이터
+- [x] STEP 36-4: page.tsx — 탭 ⚠ 조건 (active+0건, failed+tooltip)
+- [x] STEP 36-5: page.tsx — PostCard variants + hover shadow, stagger 수정
+- [x] STEP 36-6: page.tsx — FeedInfoCard error_message 조건 확장 + 애니메이션
+- [x] STEP 36-7: page.tsx — 콘텐츠 영역 tab 전환 시 fade 전환
+
 ## STEP 35: 피드 에러 표시 + 중단/재개 기능 (2026-05-17)
 - [x] STEP 35-1: PROGRESS.md 기록
 - [x] STEP 35-2: database.py — error_message 컬럼 추가 (DDL + ALTER TABLE)

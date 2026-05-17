@@ -44,14 +44,20 @@ const SPRING = { type: 'spring', stiffness: 380, damping: 32 } as const
 const PER_PAGE = 20
 
 const STATUS_LABEL: Record<string, string> = {
-  active: '활성', crawling: '크롤링 중', failed: '실패', rejected: '불가', deleted: '삭제됨',
+  active: '활성', crawling: '크롤링 중', failed: '실패', paused: '중단', rejected: '불가', deleted: '삭제됨',
 }
 const STATUS_CLS: Record<string, string> = {
   active:   'text-emerald-400 border-emerald-500/25 bg-emerald-500/10',
   crawling: 'text-blue-400 border-blue-500/25 bg-blue-500/10',
   failed:   'text-red-400 border-red-500/25 bg-red-500/10',
+  paused:   'text-amber-400 border-amber-500/25 bg-amber-500/10',
   rejected: 'text-zinc-400 border-zinc-700/50 bg-zinc-800/60',
   deleted:  'text-zinc-600 border-zinc-800/50 bg-zinc-900/60',
+}
+
+const POST_VARIANTS = {
+  hidden: { opacity: 0, y: 14 },
+  visible: { opacity: 1, y: 0 },
 }
 
 function isoNorm(iso: string) {
@@ -95,11 +101,14 @@ function PostCard({ post, onClick }: { post: Post; onClick: () => void }) {
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.15 } }}
+      variants={POST_VARIANTS}
       transition={SPRING}
-      whileHover={{ y: -3, transition: { type: 'spring', stiffness: 500, damping: 35 } }}
+      exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.15 } }}
+      whileHover={{
+        y: -4,
+        boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
+        transition: { type: 'spring', stiffness: 500, damping: 35 },
+      }}
       onClick={onClick}
       className={`card-hover bg-zinc-900 rounded-2xl border border-zinc-800 p-5 cursor-pointer ${
         post.is_read ? 'opacity-55' : ''
@@ -155,6 +164,7 @@ function PostCard({ post, onClick }: { post: Post; onClick: () => void }) {
 }
 
 // ── TabBtn ─────────────────────────────────────────────────────────────────
+// layoutId="tab-pill" 로 active 인디케이터가 탭 간 슬라이딩
 
 function TabBtn({ active, onClick, children }: {
   active: boolean
@@ -165,12 +175,18 @@ function TabBtn({ active, onClick, children }: {
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.94 }}
-      className={`relative text-sm px-3 py-1 rounded-lg transition-colors shrink-0 flex items-center gap-1 ${
-        active
-          ? 'bg-zinc-800 text-zinc-100 font-medium tab-active'
-          : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'
+      className={`relative text-sm px-3 py-1.5 rounded-lg shrink-0 flex items-center gap-1 z-0 transition-colors ${
+        active ? 'text-zinc-100 font-medium' : 'text-zinc-500 hover:text-zinc-300'
       }`}
     >
+      {active && (
+        <motion.div
+          layoutId="tab-pill"
+          className="absolute inset-0 rounded-lg bg-zinc-800"
+          style={{ zIndex: -1 }}
+          transition={SPRING}
+        />
+      )}
       {children}
     </motion.button>
   )
@@ -184,7 +200,7 @@ function FeedInfoCard({ input }: { input: CrawlInput }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -8 }}
+      initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8, transition: { duration: 0.15 } }}
       transition={SPRING}
@@ -208,8 +224,12 @@ function FeedInfoCard({ input }: { input: CrawlInput }) {
           )}
         </p>
       )}
-      {input.status === 'failed' && input.error_message && (
-        <p className="text-xs text-red-400 leading-relaxed bg-red-950/30 border border-red-900/30 rounded-lg px-3 py-2">
+      {input.error_message && (
+        <p className={`text-xs leading-relaxed rounded-lg px-3 py-2 ${
+          input.status === 'failed'
+            ? 'text-red-400 bg-red-950/30 border border-red-900/30'
+            : 'text-amber-400 bg-amber-950/30 border border-amber-900/30'
+        }`}>
           {input.error_message}
         </p>
       )}
@@ -250,7 +270,7 @@ function FeedListTab({ inputs, onSelectFeed }: { inputs: CrawlInput[]; onSelectF
       initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="space-y-2"
     >
-      {inputs.map(inp => {
+      {inputs.map((inp, i) => {
         const sc = STATUS_CLS[inp.status] ?? STATUS_CLS.deleted
         const label = STATUS_LABEL[inp.status] ?? inp.status
         return (
@@ -258,8 +278,8 @@ function FeedListTab({ inputs, onSelectFeed }: { inputs: CrawlInput[]; onSelectF
             key={inp.id}
             layout
             initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={SPRING}
+            animate={{ opacity: 1, y: 0, transition: { ...SPRING, delay: i * 0.04 } }}
+            whileHover={{ y: -2, transition: { type: 'spring', stiffness: 500, damping: 35 } }}
             onClick={() => onSelectFeed(inp.id)}
             className="card-hover bg-zinc-900 rounded-2xl border border-zinc-800 p-4 cursor-pointer space-y-2"
           >
@@ -272,9 +292,11 @@ function FeedListTab({ inputs, onSelectFeed }: { inputs: CrawlInput[]; onSelectF
               </span>
             </div>
             <p className="text-xs text-zinc-600 break-all font-mono leading-relaxed">{inp.value}</p>
-            {inp.claude_reason && (
-              <p className="text-xs text-zinc-600 leading-relaxed line-clamp-1">
-                {inp.claude_reason}
+            {inp.error_message && (
+              <p className={`text-xs leading-relaxed line-clamp-1 ${
+                inp.status === 'failed' ? 'text-red-500/70' : 'text-amber-500/70'
+              }`}>
+                {inp.error_message}
               </p>
             )}
             <div className="flex flex-wrap gap-1.5">
@@ -408,24 +430,37 @@ export default function HomePage() {
 
         {/* ── tabs ── */}
         {inputs.length > 0 && (
-          <div className="max-w-3xl mx-auto px-4 pb-3 flex gap-1 overflow-x-auto scrollbar-none">
+          <div className="max-w-3xl mx-auto px-4 pb-3 flex gap-0.5 overflow-x-auto scrollbar-none">
             <TabBtn active={activeTab === null} onClick={() => setActiveTab(null)}>
               전체
               {total > 0 && activeTab === null && (
                 <span className="text-xs text-zinc-500 ml-0.5">{total}</span>
               )}
             </TabBtn>
-            {inputs.map(inp => (
-              <TabBtn key={inp.id} active={activeTab === inp.id} onClick={() => setActiveTab(inp.id)}>
-                {inp.status === 'failed' && (
-                  <span className="text-red-400 text-xs leading-none">⚠</span>
-                )}
-                <span className="max-w-[96px] truncate">{inp.name ?? inp.value}</span>
-                {inp.post_count > 0 && (
-                  <span className="text-xs text-zinc-600">{inp.post_count}</span>
-                )}
-              </TabBtn>
-            ))}
+
+            {inputs.map(inp => {
+              const showWarn =
+                (inp.status === 'active' && inp.post_count === 0) ||
+                inp.status === 'failed'
+              const warnTitle =
+                inp.status === 'failed'
+                  ? (inp.error_message ?? '크롤링 실패')
+                  : '수집된 글 없음'
+              const warnCls = inp.status === 'failed' ? 'text-red-400' : 'text-amber-400'
+
+              return (
+                <TabBtn key={inp.id} active={activeTab === inp.id} onClick={() => setActiveTab(inp.id)}>
+                  {showWarn && (
+                    <span title={warnTitle} className={`text-xs leading-none ${warnCls}`}>⚠</span>
+                  )}
+                  <span className="max-w-[96px] truncate">{inp.name ?? inp.value}</span>
+                  {inp.post_count > 0 && (
+                    <span className="text-xs text-zinc-600">{inp.post_count}</span>
+                  )}
+                </TabBtn>
+              )
+            })}
+
             <TabBtn active={activeTab === 'feeds'} onClick={() => setActiveTab('feeds')}>
               피드 목록
             </TabBtn>
@@ -433,9 +468,14 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* ── content ── */}
-      <div className="max-w-3xl mx-auto px-4 py-6">
-
+      {/* ── content — key 변경 시 fade-in 전환 ── */}
+      <motion.div
+        key={String(activeTab)}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.18 }}
+        className="max-w-3xl mx-auto px-4 py-6"
+      >
         {/* 피드 목록 탭 */}
         {activeTab === 'feeds' ? (
           <FeedListTab inputs={inputs} onSelectFeed={id => setActiveTab(id)} />
@@ -504,7 +544,10 @@ export default function HomePage() {
                   className="space-y-3"
                   initial="hidden"
                   animate="visible"
-                  variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
+                  variants={{
+                    hidden: {},
+                    visible: { transition: { staggerChildren: 0.05 } },
+                  }}
                 >
                   <AnimatePresence mode="popLayout">
                     {posts.map(post => (
@@ -539,7 +582,7 @@ export default function HomePage() {
             )}
           </>
         )}
-      </div>
+      </motion.div>
     </div>
   )
 }
