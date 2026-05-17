@@ -144,14 +144,24 @@ def _extract_article_links(html: str, base_url: str) -> list[str]:
 
 
 async def fetch_links(url: str) -> list[str]:
-    """Fetch a listing page via simple HTTP and return extracted article links.
+    """Fetch a listing page and return extracted article links.
+    Falls back to Playwright when simple HTTP yields fewer than 3 links (JS-rendered pages).
     Returns [] on any error (caller falls back to treating page as single article)."""
     _check_blacklist(url)
     try:
         async with httpx.AsyncClient(timeout=20, headers=_HEADERS, follow_redirects=True) as client:
             resp = await client.get(url)
             resp.raise_for_status()
-            return _extract_article_links(resp.text, url)
+            links = _extract_article_links(resp.text, url)
+        log.info("fetch_links: extracted %d links (simple) from %s", len(links), url)
+        if len(links) >= 3:
+            return links
+        # Too few links — page likely requires JS rendering
+        log.info("fetch_links: < 3 links, retrying with Playwright for %s", url)
+        html = await _fetch_html_playwright(url)
+        links = _extract_article_links(html, url)
+        log.info("fetch_links: extracted %d links (playwright) from %s", len(links), url)
+        return links
     except Exception as exc:
         log.debug("fetch_links failed for %s: %s", url, exc)
         return []
