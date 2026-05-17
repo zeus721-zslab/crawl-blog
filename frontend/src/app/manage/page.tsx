@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { apiFetch } from '@/lib/api'
 
-type InputStatus = 'active' | 'crawling' | 'failed' | 'rejected' | 'deleted'
+type InputStatus = 'active' | 'crawling' | 'failed' | 'rejected' | 'deleted' | 'paused'
 type Period = '1h' | '6h' | '24h'
 
 interface CrawlInput {
@@ -22,6 +22,7 @@ interface CrawlInput {
   post_count: number
   has_new: number
   created_at: string
+  error_message: string | null
 }
 
 interface SysStatus {
@@ -47,6 +48,7 @@ const STATUS_CFG: Record<InputStatus, { label: string; dot: string; chip: string
   active:   { label: '활성',      dot: 'bg-emerald-400 status-glow-active', chip: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25', glow: 'status-glow-active' },
   crawling: { label: '크롤링 중', dot: 'bg-blue-400 status-glow-crawl',    chip: 'bg-blue-500/10 text-blue-400 border-blue-500/25',         glow: 'status-glow-crawl' },
   failed:   { label: '실패',      dot: 'bg-red-400 status-glow-fail',      chip: 'bg-red-500/10 text-red-400 border-red-500/25',            glow: 'status-glow-fail' },
+  paused:   { label: '중단',      dot: 'bg-amber-400',                     chip: 'bg-amber-500/10 text-amber-400 border-amber-500/25',      glow: '' },
   rejected: { label: '불가',      dot: 'bg-zinc-500',                      chip: 'bg-zinc-800/60 text-zinc-400 border-zinc-700/50',         glow: '' },
   deleted:  { label: '삭제됨',    dot: 'bg-zinc-700',                      chip: 'bg-zinc-900/60 text-zinc-600 border-zinc-800/50',         glow: '' },
 }
@@ -207,7 +209,7 @@ function JudgmentCard({ result, onDismiss }: { result: JudgmentResult; onDismiss
 // ── InputCard ──────────────────────────────────────────────────────────────
 
 function InputCard({
-  input, password, onDelete, onIntervalChange, onCrawl, onNameChange,
+  input, password, onDelete, onIntervalChange, onCrawl, onNameChange, onStatusChange,
 }: {
   input: CrawlInput
   password: string
@@ -215,13 +217,16 @@ function InputCard({
   onIntervalChange: (id: number, p: Period) => void
   onCrawl: (id: number) => void
   onNameChange: (id: number, name: string) => void
+  onStatusChange: (id: number, status: InputStatus) => void
 }) {
-  const [deleting,  setDeleting]  = useState(false)
-  const [crawling,  setCrawling]  = useState(false)
-  const [nameVal,   setNameVal]   = useState(input.name ?? '')
+  const [deleting,   setDeleting]   = useState(false)
+  const [crawling,   setCrawling]   = useState(false)
+  const [pausing,    setPausing]    = useState(false)
+  const [resuming,   setResuming]   = useState(false)
+  const [nameVal,    setNameVal]    = useState(input.name ?? '')
   const [nameSaving, setNameSaving] = useState(false)
   const nameDirty = nameVal !== (input.name ?? '')
-  const sc = STATUS_CFG[input.status]
+  const sc = STATUS_CFG[input.status] ?? STATUS_CFG.deleted
 
   async function handleSaveName() {
     setNameSaving(true)
@@ -268,6 +273,30 @@ function InputCard({
       onCrawl(input.id)
     } catch (e: unknown) { alert((e as Error).message) }
     finally { setCrawling(false) }
+  }
+
+  async function handlePause() {
+    setPausing(true)
+    try {
+      await apiFetch(`/api/inputs/${input.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'paused', password }),
+      })
+      onStatusChange(input.id, 'paused')
+    } catch (e: unknown) { alert((e as Error).message) }
+    finally { setPausing(false) }
+  }
+
+  async function handleResume() {
+    setResuming(true)
+    try {
+      await apiFetch(`/api/inputs/${input.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'active', password }),
+      })
+      onStatusChange(input.id, 'active')
+    } catch (e: unknown) { alert((e as Error).message) }
+    finally { setResuming(false) }
   }
 
   return (
@@ -327,6 +356,26 @@ function InputCard({
               ) : '수동 크롤링'}
             </motion.button>
           )}
+          {input.status === 'active' && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handlePause}
+              disabled={pausing}
+              className="text-xs px-3 py-1.5 rounded-lg bg-amber-950/40 hover:bg-amber-900/50 text-amber-400 border border-amber-900/40 transition-colors disabled:opacity-40"
+            >
+              {pausing ? '중단 중' : '중단'}
+            </motion.button>
+          )}
+          {(input.status === 'paused' || input.status === 'failed') && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleResume}
+              disabled={resuming}
+              className="text-xs px-3 py-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-400 border border-emerald-900/40 transition-colors disabled:opacity-40"
+            >
+              {resuming ? '재개 중' : '재개'}
+            </motion.button>
+          )}
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleDelete}
@@ -362,6 +411,14 @@ function InputCard({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Error message ── */}
+      {input.status === 'failed' && input.error_message && (
+        <div className="text-xs text-red-400 leading-relaxed bg-red-950/30 border border-red-900/30 rounded-xl px-3.5 py-2.5">
+          <span className="font-semibold mr-1.5 opacity-70">에러</span>
+          {input.error_message}
+        </div>
+      )}
 
       {/* ── Stats ── */}
       <div className="flex flex-wrap gap-1">
@@ -521,6 +578,11 @@ export default function ManagePage() {
   function handleCrawl(id: number) {
     setInputs(prev => prev.map(i => i.id === id ? { ...i, status: 'crawling' as InputStatus } : i))
     window.setTimeout(loadInputs, 3000)
+  }
+  function handleStatusChange(id: number, status: InputStatus) {
+    setInputs(prev => prev.map(i =>
+      i.id === id ? { ...i, status, error_message: status === 'active' ? null : i.error_message } : i
+    ))
   }
 
   // ── Password gate ──────────────────────────────────────────────────────
@@ -712,6 +774,7 @@ export default function ManagePage() {
                     onIntervalChange={handlePeriodChange}
                     onCrawl={handleCrawl}
                     onNameChange={handleNameChange}
+                    onStatusChange={handleStatusChange}
                   />
                 </motion.div>
               ))}

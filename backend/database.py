@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS inputs (
     crawl_interval VARCHAR(5) NOT NULL DEFAULT '6h',
     last_crawl_at VARCHAR(32),
     next_crawl_at VARCHAR(32),
+    error_message TEXT DEFAULT NULL,
     post_count INT NOT NULL DEFAULT 0,
     has_new TINYINT NOT NULL DEFAULT 0,
     created_at VARCHAR(32) NOT NULL DEFAULT (DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%S'))
@@ -75,6 +76,9 @@ async def init_db():
             await cur.execute(CREATE_INPUTS)
             await cur.execute(CREATE_POSTS)
             await cur.execute(CREATE_RATE_LIMITS)
+            await cur.execute(
+                "ALTER TABLE inputs ADD COLUMN IF NOT EXISTS error_message TEXT DEFAULT NULL"
+            )
         await conn.commit()
 
 

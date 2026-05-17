@@ -99,6 +99,7 @@ class InputUpdate(BaseModel):
     password: str
     interval: str | None = None
     name: str | None = None
+    status: str | None = None
 
 
 class DeleteRequest(BaseModel):
@@ -187,9 +188,20 @@ async def update_input(input_id: int, body: InputUpdate, request: Request):
         updates["crawl_interval"] = body.interval
     if body.name is not None:
         updates["name"] = body.name
+    if body.status is not None:
+        if body.status not in ("active", "paused"):
+            raise HTTPException(status_code=400, detail="Invalid status")
+        updates["status"] = body.status
+        if body.status == "active":
+            updates["error_message"] = None
     if updates:
         await database.update_input(input_id, **updates)
-    if body.interval and inp["status"] == "active":
+    if body.status == "paused":
+        sched.unschedule_input(input_id)
+    elif body.status == "active":
+        new_interval = body.interval or inp["crawl_interval"]
+        sched.schedule_input(input_id, new_interval)
+    elif body.interval and inp["status"] == "active":
         sched.schedule_input(input_id, body.interval)
     return {"ok": True}
 
@@ -256,7 +268,9 @@ async def trigger_crawl(input_id: int, body: CrawlTrigger, request: Request):
         raise HTTPException(status_code=404, detail="Input not found")
     if inp["status"] == "crawling":
         raise HTTPException(status_code=409, detail="Already crawling")
-    task = asyncio.create_task(sched.crawl_input(input_id))
+    if inp["status"] == "paused":
+        raise HTTPException(status_code=409, detail="피드가 중단 상태입니다. 먼저 재개하세요")
+    task = asyncio.create_task(sched.crawl_input(input_id, force=True))
     _bg_tasks.add(task)
     task.add_done_callback(_bg_task_done)
     return {"ok": True}

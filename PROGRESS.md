@@ -1,5 +1,39 @@
 # crawl-blog — 작업 진행 현황
 
+## STEP 35: 피드 에러 표시 + 중단/재개 기능 (2026-05-17)
+- [x] STEP 35-1: PROGRESS.md 기록
+- [x] STEP 35-2: database.py — error_message 컬럼 추가 (DDL + ALTER TABLE)
+- [x] STEP 35-3: scheduler.py — force 파라미터 + paused/failed skip + error_message 저장
+- [x] STEP 35-4: main.py — InputUpdate status 필드 + PATCH 핸들러 + trigger_crawl paused 차단
+- [x] STEP 35-5: frontend/page.tsx — error_message 타입 + 탭 에러 아이콘 + FeedInfoCard 에러 표시
+- [x] STEP 35-6: frontend/manage/page.tsx — error_message + paused 상태 + 중단/재개 버튼 + 에러 표시
+
+## STEP 34: RSS source_url 버그 수정 — 피드 URL 자동 감지 (2026-05-17)
+- [x] STEP 34-1: PROGRESS.md 기록
+- [x] STEP 34-2: scheduler.py — 피드 URL 자동 감지 후 method="rss" 전환
+
+## STEP 33: fetch_links Playwright fallback 조건 완화 (2026-05-17)
+- [x] STEP 33-1: PROGRESS.md 기록
+- [x] STEP 33-2: crawler.py — fallback 조건 < 3 → <= 5
+
+## STEP 32: LLM mock provider 추가 (2026-05-17)
+- [x] STEP 32-1: PROGRESS.md 기록
+- [x] STEP 32-2: backend/llm/mock.py 생성
+- [x] STEP 32-3: backend/llm/factory.py — mock 분기 추가
+- [x] STEP 32-4: .env.example — LLM_PROVIDER=mock 주석 추가
+
+## STEP 31: fetch_links 디버깅 + Playwright fallback (2026-05-17)
+- [x] STEP 31-1: PROGRESS.md 기록
+- [x] STEP 31-2: crawler.py — fetch_links 추출 수 INFO 로그 + 3개 미만 시 Playwright fallback
+
+## STEP 30: _is_likely_article 오탐 수정 (2026-05-17)
+- [x] STEP 30-1: PROGRESS.md 기록
+- [x] STEP 30-2: crawler.py — _NAV_SEGMENTS에서 "page"/"video"/"videos" 제거, 단일 세그먼트 기준 > 25 → > 15
+
+## STEP 29: 링크 추출 로직 개선 — 기사 URL 필터링 (2026-05-17)
+- [x] STEP 29-1: PROGRESS.md 기록
+- [x] STEP 29-2: crawler.py — _NAV_SEGMENTS / _DATE_RE 상수 추가, _is_likely_article 헬퍼 추가, _extract_article_links 필터 적용
+
 ## STEP 28: 백그라운드 태스크 로그 미출력 수정 (2026-05-17)
 - [x] STEP 28-1: PROGRESS.md 기록
 - [x] STEP 28-2: main.py — module-level basicConfig(INFO) 추가

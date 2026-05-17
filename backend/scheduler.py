@@ -32,12 +32,15 @@ _job_defaults = {
 scheduler = AsyncIOScheduler(jobstores=_jobstores, job_defaults=_job_defaults)
 
 
-async def crawl_input(input_id: int) -> None:
+async def crawl_input(input_id: int, force: bool = False) -> None:
     log.info("Crawl start: input %d", input_id)
     try:
         inp = await database.get_input(input_id)
         if not inp or inp["status"] == "deleted":
             log.info("Crawl abort: input %d not found or deleted", input_id)
+            return
+        if not force and inp["status"] in ("paused", "failed"):
+            log.info("Crawl skip: input %d status=%s (scheduled)", input_id, inp["status"])
             return
 
         await database.update_input(input_id, status="crawling")
@@ -151,16 +154,17 @@ async def crawl_input(input_id: int) -> None:
             status="active",
             last_crawl_at=datetime.utcnow().isoformat(),
             next_crawl_at=(datetime.utcnow() + timedelta(hours=hours)).isoformat(),
+            error_message=None,
         )
         if refined_count > 0:
             log.info("Crawl done for input %d: %d items saved", input_id, refined_count)
         else:
             log.info("Crawl done for input %d: no new items (skipped or filtered)", input_id)
 
-    except Exception:
+    except Exception as exc:
         log.exception("Crawl failed for input %d", input_id)
         try:
-            await database.update_input(input_id, status="failed")
+            await database.update_input(input_id, status="failed", error_message=str(exc))
         except Exception:
             log.exception("Failed to set status=failed for input %d", input_id)
 

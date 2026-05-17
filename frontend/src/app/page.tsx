@@ -28,6 +28,7 @@ interface CrawlInput {
   crawl_interval: string
   last_crawl_at: string | null
   post_count: number
+  error_message: string | null
 }
 
 interface PostsResponse {
@@ -205,6 +206,11 @@ function FeedInfoCard({ input }: { input: CrawlInput }) {
           {input.crawl_method && (
             <span className="ml-1.5 font-mono opacity-50">[{input.crawl_method}]</span>
           )}
+        </p>
+      )}
+      {input.status === 'failed' && input.error_message && (
+        <p className="text-xs text-red-400 leading-relaxed bg-red-950/30 border border-red-900/30 rounded-lg px-3 py-2">
+          {input.error_message}
         </p>
       )}
       <div className="flex flex-wrap gap-2 pt-0.5">
@@ -411,6 +417,9 @@ export default function HomePage() {
             </TabBtn>
             {inputs.map(inp => (
               <TabBtn key={inp.id} active={activeTab === inp.id} onClick={() => setActiveTab(inp.id)}>
+                {inp.status === 'failed' && (
+                  <span className="text-red-400 text-xs leading-none">⚠</span>
+                )}
                 <span className="max-w-[96px] truncate">{inp.name ?? inp.value}</span>
                 {inp.post_count > 0 && (
                   <span className="text-xs text-zinc-600">{inp.post_count}</span>
